@@ -1,0 +1,38 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 20px;
+  background: #101014;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+
+main {
+  max-width: 460px;
+  margin: 30px auto;
+}
+
+section {
+  background: #202027;
+  border: 1px solid #38313b;
+  border-radius: 16px;
+  padding: 20px;
+  margin-top: 16px;
+}
+
+h1 {
+  color: #ff4545;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  background: #d83232;
+  color: white;
+  border: 0;
+  border-radius: 10px;
+  font-size: 16px;
+}
