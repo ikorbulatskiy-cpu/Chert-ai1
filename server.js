@@ -4,6 +4,7 @@ const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
 const crypto = require("node:crypto");
+const { spawn } = require("node:child_process");
 
 const ROOT = __dirname;
 const DATA_DIR = path.join(ROOT, "data");
@@ -17,7 +18,8 @@ const MIME = { ".html": "text/html; charset=utf-8", ".css": "text/css; charset=u
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
 let settings = loadSettings();
-let bot = { running: false, startedAt: null, heartbeatAt: null };
+let bot = { running: false, startedAt: null, heartbeatAt: null, pid: null };
+let botProcess = null;
 let galaxy = { state: "not_checked", checkedAt: null, httpStatus: null, detail: "Внешний сайт ещё не проверялся." };
 const hits = new Map();
 
@@ -112,7 +114,7 @@ const server = http.createServer(async (req, res) => {
   if (!rateAllowed(ip)) return send(res, 429, { error: "Слишком много запросов" });
   const url = new URL(req.url, "http://localhost");
   try {
-    if (url.pathname.startsWith("/api/") && req.method !== "GET" && !authorized(req)) {
+    if (url.pathname.startsWith("/api/") && url.pathname !== "/api/health" && !authorized(req)) {
       audit("security.unauthorized_request", { method: req.method, path: url.pathname });
       return send(res, 401, { error: "Требуется локальный доступ или API-токен" });
     }
@@ -127,15 +129,37 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: true, settings });
     }
     if (url.pathname === "/api/bot/start" && req.method === "POST") {
-      if (!bot.running) {
-        bot = { running: true, startedAt: new Date().toISOString(), heartbeatAt: new Date().toISOString() };
-        audit("bot.started");
+      if (!botProcess) {
+        botProcess = spawn(process.execPath, [path.join(ROOT, "bot-worker.js")], {
+          cwd: ROOT, stdio: ["ignore", "ignore", "ignore", "ipc"],
+          env: { ...process.env, CHERT_BOT_WORKER: "1" }
+        });
+        bot = { running: true, startedAt: new Date().toISOString(), heartbeatAt: null, pid: botProcess.pid };
+        audit("bot.process_started", { pid: botProcess.pid });
+        botProcess.on("message", message => {
+          if (message && message.type === "heartbeat") bot.heartbeatAt = message.at;
+        });
+        botProcess.on("error", error => {
+          audit("bot.process_error", { message: error.message });
+          bot = { running: false, startedAt: null, heartbeatAt: null, pid: null };
+          botProcess = null;
+        });
+        botProcess.on("exit", (code, signal) => {
+          audit("bot.process_exited", { code, signal });
+          bot = { running: false, startedAt: null, heartbeatAt: null, pid: null };
+          botProcess = null;
+        });
       }
       return send(res, 200, { ok: true, bot });
     }
     if (url.pathname === "/api/bot/stop" && req.method === "POST") {
-      if (bot.running) audit("bot.stopped");
-      bot = { running: false, startedAt: null, heartbeatAt: null };
+      if (botProcess) {
+        const child = botProcess;
+        botProcess = null;
+        child.kill("SIGTERM");
+        audit("bot.process_stop_requested", { pid: child.pid });
+      }
+      bot = { running: false, startedAt: null, heartbeatAt: null, pid: null };
       return send(res, 200, { ok: true, bot });
     }
     if (url.pathname === "/api/galaxy/check" && req.method === "POST") return send(res, 200, { ok: true, galaxy: await checkGalaxy() });
@@ -165,5 +189,6 @@ server.listen(PORT, HOST, () => {
 });
 for (const signal of ["SIGINT", "SIGTERM"]) process.on(signal, () => {
   audit("backend.stopping", { signal });
+  if (botProcess) botProcess.kill("SIGTERM");
   server.close(() => process.exit(0));
 });
