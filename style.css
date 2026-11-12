@@ -1,7 +1,7 @@
 :root{color-scheme:dark;--bg:#101014;--panel:#1a1a22;--line:#30303b;--text:#f4f1f4;--muted:#9b98a4;--red:#ff4c55;--red2:#b92737;--green:#70d6a0}
 *{box-sizing:border-box}
 body{margin:0;background:radial-gradient(ellipse at 50% -20%,#34202a 0,transparent 48%),var(--bg);color:var(--text);font:15px/1.5 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-button,a,input{font:inherit}
+button,a,input,textarea{font:inherit}
 .shell{max-width:760px;margin:auto;padding:0 20px}
 .topbar{height:76px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #ffffff12}
 .brand{display:flex;align-items:center;gap:11px;color:var(--text);text-decoration:none;font-weight:900;letter-spacing:.08em}
@@ -27,8 +27,8 @@ h2{font-size:18px;margin:0;letter-spacing:-.02em}
 .pill{font-size:9px;font-weight:900;letter-spacing:.1em;color:#e8b45d;border:1px solid #795b35;border-radius:30px;padding:6px 9px;white-space:nowrap}
 .steps{list-style:none;padding:0;margin:20px 0;display:grid;gap:12px;color:#d4d0da;font-size:13px}
 .steps li{display:flex;align-items:center;gap:10px}
-.steps li span{display:grid;place-items:center;width:23px;height:23px;border-radius:8px;background:#34303b;color:var(--red);font-weight:900}
-.button{width:100%}.hint{font-size:11px!important;line-height:1.5;margin-top:13px!important}
+.steps li span{display:grid;place-items:center;width:23px;height:23px;border-radius:8px;background:#34303b;color:var(--red);font-weight:900;flex:0 0 23px}
+.button{width:100%;margin-top:9px}.hint{font-size:11px!important;line-height:1.5;margin-top:13px!important}
 .empty-state{display:flex;gap:13px;align-items:center}
 .avatar{width:48px;height:48px;display:grid;place-items:center;background:#30232c;border:1px solid #6b3541;border-radius:15px;color:var(--red);font-size:25px;font-weight:900}
 .empty-state b{font-size:14px}
@@ -43,8 +43,9 @@ h2{font-size:18px;margin:0;letter-spacing:-.02em}
 .switch input:checked+span{background:var(--red)}
 .switch input:checked+span:before{transform:translateX(19px)}
 .text-button{background:none;border:0;color:var(--red);font-size:10px;font-weight:900;letter-spacing:.1em;cursor:pointer}
-.log-panel{min-height:78px}.log-entry{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #ffffff0c;font-size:11px}.log-entry:last-child{border:0}.log-time{color:var(--muted);white-space:nowrap}.log-message{color:#d5d1db}.log-empty{color:var(--muted);font-size:12px}
-footer{display:flex;justify-content:space-between;gap:10px;padding:22px 2px;color:var(--muted);font-size:10px}
-@media(max-width:480px){.shell{padding:0 15px}.topbar{height:66px}.system-state{font-size:8px}.hero{padding-top:27px}.panel{padding:16px}.section-heading{font-size:9px}}
-
+.log-panel{min-height:78px}.log-entry{display:block;padding:10px 0;border-bottom:1px solid #ffffff0c;font-size:11px}.log-entry:last-child{border:0}.log-time,.import-meta{color:var(--muted);white-space:nowrap}.log-message{color:#d5d1db;overflow-wrap:anywhere}.log-empty{color:var(--muted);font-size:12px}
+.import-text{white-space:pre-wrap;overflow-wrap:anywhere;max-height:240px;overflow:auto;background:#111118;border:1px solid var(--line);border-radius:9px;padding:11px;color:#e5e1e8;font:12px/1.5 ui-monospace,monospace;margin:9px 0 0}
+.code-input{display:block;min-height:115px;resize:vertical;font:11px/1.45 ui-monospace,monospace;overflow-wrap:anywhere}
 .auth-panel{margin-bottom:28px}.token-label{display:block;margin:15px 0 7px;color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.12em}.token-input{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:10px;background:#111118;color:var(--text);outline:none}.token-input:focus{border-color:var(--red)}.auth-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:11px}.button-secondary{background:#33323d;color:#eee}
+footer{display:flex;justify-content:space-between;gap:10px;padding:22px 2px;color:var(--muted);font-size:10px}
+@media(max-width:480px){.shell{padding:0 15px}.topbar{height:66px}.system-state{font-size:8px}.hero{padding-top:27px}.panel{padding:16px}.section-heading{font-size:9px}.log-entry{font-size:10px}}
