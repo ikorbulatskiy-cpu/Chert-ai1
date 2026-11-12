@@ -46,7 +46,14 @@ async function main() {
   try {
     await waitForServer();
 
-    let response = await request("/api/health");
+    let response = await request("/", { redirect: "manual" });
+    assert.equal(response.status, 302, "root route should redirect to index.html");
+    assert.equal(response.headers.get("location"), "/index.html");
+
+    response = await request("/index.html");
+    assert.equal(response.status, 200, "index.html should be served");
+
+    response = await request("/api/health");
     assert.equal(response.status, 200, "health endpoint should be public");
 
     response = await request("/api/status");
