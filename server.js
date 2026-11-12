@@ -7,14 +7,24 @@ const crypto = require("node:crypto");
 const { spawn } = require("node:child_process");
 
 const ROOT = __dirname;
-const DATA_DIR = path.join(ROOT, "data");
+const DATA_DIR = process.env.CHERT_DATA_DIR || path.join(ROOT, "data");
 const SETTINGS_FILE = path.join(DATA_DIR, "settings.json");
 const LOG_FILE = path.join(DATA_DIR, "audit.jsonl");
-const HOST = process.env.CHERT_HOST || "127.0.0.1";
+const HOST = process.env.CHERT_HOST || "0.0.0.0";
 const PORT = Number(process.env.PORT || process.env.CHERT_PORT || 8787);
 const TOKEN = process.env.CHERT_API_TOKEN || "";
 const DEFAULTS = { messageMonitoring: false, autoReply: false, notifications: true };
-const MIME = { ".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".json": "application/json; charset=utf-8" };
+
+const isLoopbackHost = HOST === "127.0.0.1" || HOST === "localhost" || HOST === "::1";
+if (!Number.isInteger(PORT) || PORT < 1 || PORT > 65535) {
+  console.error("Invalid PORT: expected an integer from 1 to 65535.");
+  process.exit(1);
+}
+if (!isLoopbackHost && TOKEN.length < 32) {
+  console.error("Refusing public bind: set CHERT_API_TOKEN to a secret of at least 32 characters.");
+  process.exit(1);
+}
+\nconst MIME = { ".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".json": "application/json; charset=utf-8" };
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
 let settings = loadSettings();
@@ -116,7 +126,7 @@ const server = http.createServer(async (req, res) => {
   try {
     if (url.pathname.startsWith("/api/") && url.pathname !== "/api/health" && !authorized(req)) {
       audit("security.unauthorized_request", { method: req.method, path: url.pathname });
-      return send(res, 401, { error: "Требуется локальный доступ или API-токен" });
+      return send(res, 401, { error: "Требуется корректный API-токен" });
     }
     if (url.pathname === "/api/health" && req.method === "GET") return send(res, 200, { ok: true, backend: "online" });
     if (url.pathname === "/api/status" && req.method === "GET") return send(res, 200, statusPayload());
