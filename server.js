@@ -225,7 +225,12 @@ const server = http.createServer(async (req, res) => {
     }
     if (url.pathname.startsWith("/api/")) return send(res, 404, { error: "API endpoint не найден" });
 
-    const requested = url.pathname === "/" ? "/index.html" : decodeURIComponent(url.pathname);
+    if (url.pathname === "/" && req.method === "GET") {
+      res.writeHead(302, { location: "/index.html", "cache-control": "no-store" });
+      return res.end();
+    }
+
+    const requested = decodeURIComponent(url.pathname);
     const file = path.resolve(ROOT, "." + requested);
     if (!file.startsWith(ROOT + path.sep)) return send(res, 403, { error: "Forbidden" });
     fs.readFile(file, (error, data) => {
