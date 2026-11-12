@@ -13,9 +13,16 @@ on:
 
 jobs:
   build:
-    runs-on: macos-14
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Diagnose Apple build runner
+        run: |
+          echo "Runner: $RUNNER_OS / $RUNNER_ARCH"
+          sw_vers
+          xcodebuild -version
+          xcodebuild -showsdks
 
       - name: Build for iOS Simulator
         run: |
