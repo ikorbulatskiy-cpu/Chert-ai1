@@ -45,17 +45,16 @@
 
       <div class="section-heading"><span>02 / ПОДКЛЮЧЕНИЕ GALAXY</span><span class="muted">БРАУЗЕРНЫЙ МОСТ</span></div>
       <section class="panel">
-        <div class="panel-title"><div><h2>Импорт выделенного текста</h2><p>Работает из открытой вкладки официального Galaxy.</p></div><span class="pill">РУЧНОЙ РЕЖИМ</span></div>
+        <div class="panel-title"><div><h2>Импорт текста из Galaxy</h2><p>Без закладок и JavaScript на стороннем сайте.</p></div><span class="pill">РУЧНОЙ РЕЖИМ</span></div>
         <ol class="steps">
-          <li><span>1</span>Подключи API-токен выше.</li>
-          <li><span>2</span>Скопируй код закладки и создай закладку Safari с этим адресом.</li>
-          <li><span>3</span>Открой Galaxy, войди на официальном сайте и выдели нужный текст профиля или сообщения.</li>
-          <li><span>4</span>Запусти закладку. Введи API-токен в запросе. Будет отправлено только выделение.</li>
+          <li><span>1</span>Открой официальный Galaxy и войди обычным способом.</li>
+          <li><span>2</span>Скопируй нужный текст сообщений или профиля.</li>
+          <li><span>3</span>Вернись сюда, вставь текст в поле и нажми «Импортировать».</li>
         </ol>
-        <label class="token-label" for="bookmarklet-code">КОД ЗАКЛАДКИ SAFARI</label>
-        <textarea id="bookmarklet-code" class="token-input code-input" readonly spellcheck="false"></textarea>
-        <button class="button button-primary" id="copy-bookmarklet">Скопировать код закладки</button>
-        <p class="hint" id="bridge-state">Мост не читает cookies, localStorage, скрытые поля и не нажимает кнопки сайта. Отправка игровых сообщений не реализована.</p>
+        <label class="token-label" for="galaxy-text">ТЕКСТ ИЗ GALAXY</label>
+        <textarea id="galaxy-text" class="token-input paste-input" maxlength="8000" placeholder="Вставь сюда скопированный текст…" spellcheck="false"></textarea>
+        <div class="paste-footer"><span id="galaxy-char-count">0 / 8000</span><button class="button button-primary" id="import-galaxy-text">Импортировать текст</button></div>
+        <p class="hint" id="bridge-state">Отправляется только текст, который ты сам вставил. Пароли, cookies и данные сессии не читаются. Автоматическое чтение и отправка игровых сообщений не реализованы.</p>
       </section>
 
       <div class="section-heading"><span>03 / ИМПОРТИРОВАННЫЕ ДАННЫЕ</span><button class="text-button" id="refresh-imports">ОБНОВИТЬ</button></div>
