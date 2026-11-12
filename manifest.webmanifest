@@ -1,0 +1,22 @@
+{
+  "id": "/",
+  "name": "ЧЁРТ AI",
+  "short_name": "ЧЁРТ AI",
+  "description": "Панель управления Chert AI и ручной мост для Galaxy",
+  "lang": "ru",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "background_color": "#101014",
+  "theme_color": "#101014",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
