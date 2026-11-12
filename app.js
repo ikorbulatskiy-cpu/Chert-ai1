@@ -135,7 +135,7 @@
       setPill("#galaxy-pill", g.httpStatus ? "HTTP " + g.httpStatus : g.state.toUpperCase(), g.state === "reachable" ? "ok" : "warn");
     }
     settings = { ...defaults, ...data.settings };
-    document.querySelectorAll("[data-setting]").forEach(input => input.checked = Boolean(settings[input.dataset.setting]));
+    document.querySelectorAll("[data-setting]").forEach(input => { input.checked = input.disabled ? false : Boolean(settings[input.dataset.setting]); });
     $("#settings-state").textContent = "Настройки сохраняются backend-сервером.";
   }
   async function refreshAll() {
