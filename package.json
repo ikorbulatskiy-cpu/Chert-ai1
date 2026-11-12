@@ -5,7 +5,7 @@
   "description": "Chert AI local backend and Galaxy public-page availability probe",
   "scripts": {
     "start": "node server.js",
-    "check": "node --check server.js && node --check app.js"
+    "check": "node --check server.js && node --check bot-worker.js && node --check app.js"
   },
   "engines": {
     "node": ">=18"
