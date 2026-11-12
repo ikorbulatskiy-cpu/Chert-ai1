@@ -24,7 +24,8 @@ if (!isLoopbackHost && TOKEN.length < 32) {
   console.error("Refusing public bind: set CHERT_API_TOKEN to a secret of at least 32 characters.");
   process.exit(1);
 }
-\nconst MIME = { ".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".json": "application/json; charset=utf-8" };
+
+const MIME = { ".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".json": "application/json; charset=utf-8" };
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
 let settings = loadSettings();
@@ -48,12 +49,14 @@ function persistSettings() {
 }
 function audit(event, details = {}) {
   const row = { id: crypto.randomUUID(), at: new Date().toISOString(), event, details };
-  fs.appendFileSync(LOG_FILE, JSON.stringify(row) + "\n", { mode: 0o600 });
+  fs.appendFileSync(LOG_FILE, JSON.stringify(row) + "
+", { mode: 0o600 });
   return row;
 }
 function readLogs(limit = 100) {
   try {
-    return fs.readFileSync(LOG_FILE, "utf8").trim().split("\n").filter(Boolean).slice(-limit).reverse().map(line => JSON.parse(line));
+    return fs.readFileSync(LOG_FILE, "utf8").trim().split("
+").filter(Boolean).slice(-limit).reverse().map(line => JSON.parse(line));
   } catch { return []; }
 }
 function send(res, status, body) {
