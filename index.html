@@ -1,38 +1,68 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CHERT AI</title>
+  <meta name="theme-color" content="#101014">
+  <title>ЧЁРТ AI · Galaxy of Dating</title>
   <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
 </head>
 <body>
-<main>
-  <header>
-    <h1>ЧЁРТ AI</h1>
-    <p>Помощник Galaxy of Dating</p>
-  </header>
+  <div class="shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="ЧЁРТ AI"><span class="brand-mark">Ч</span><span>ЧЁРТ <b>AI</b><small>GALAXY OF DATING</small></span></a>
+      <span class="system-state"><i></i> ЛОКАЛЬНЫЙ РЕЖИМ</span>
+    </header>
 
-  <section>
-    <h2>Подключение персонажа</h2>
-    <p>Вход по коду восстановления</p>
-    <input type="password" placeholder="Код восстановления" disabled>
-    <button disabled>Войти на сервер</button>
-    <p>Статус: ожидает подключения</p>
-  </section>
+    <main>
+      <section class="hero">
+        <div class="eyebrow">ПАНЕЛЬ УПРАВЛЕНИЯ</div>
+        <h1>Твой игровой<br><em>напарник.</em></h1>
+        <p>Управление подключением, персонажем и автоматизацией в одном месте.</p>
+        <a class="primary-link" href="https://galaxy.mobstudio.ru/web/" target="_blank" rel="noopener noreferrer">Открыть официальный Galaxy <span>↗</span></a>
+      </section>
 
-  <section>
-    <h2>Персонаж</h2>
-    <p>Имя: не авторизован</p>
-    <h2>Планета</h2>
-    <p>Планета пока не выбрана</p>
-  </section>
+      <section class="notice" role="status">
+        <span class="notice-icon">!</span>
+        <div><b>Подключение к игре ещё не подтверждено</b><p>Вход выполняется только на официальном сайте. ЧЁРТ AI не запрашивает и не сохраняет пароль.</p></div>
+      </section>
 
-  <section>
-    <h2>Управление ботом</h2>
-    <p>Получение сообщений: выключено</p>
-    <p>Автоответы: выключены</p>
-  </section>
-</main>
+      <div class="section-heading"><span>01 / ПОДКЛЮЧЕНИЕ</span><span class="muted">БЕЗ ПЕРЕДАЧИ ПАРОЛЯ</span></div>
+      <section class="panel connection-panel">
+        <div class="panel-title"><div><h2>Galaxy of Dating</h2><p>Официальная игровая сессия</p></div><span class="pill" id="connection-pill">НЕ ПОДКЛЮЧЕНО</span></div>
+        <ol class="steps">
+          <li><span>1</span>Открой официальный сайт и войди там.</li>
+          <li><span>2</span>Вернись сюда после входа.</li>
+          <li><span>3</span>Дождись поддержки безопасного способа интеграции.</li>
+        </ol>
+        <button class="button button-primary" id="open-site">Открыть сайт для входа ↗</button>
+        <p class="hint">Статус сессии нельзя проверить с этой страницы: браузер изолирует данные разных сайтов.</p>
+      </section>
+
+      <div class="section-heading"><span>02 / ПЕРСОНАЖ</span><span class="muted">ДАННЫЕ ИГРЫ</span></div>
+      <section class="panel">
+        <div class="empty-state"><div class="avatar">?</div><div><b id="character-name">Персонаж не загружен</b><p id="character-description">Сначала потребуется безопасный доступ к данным игры.</p></div></div>
+        <div class="stats">
+          <div><small>УРОВЕНЬ</small><b id="level">—</b></div>
+          <div><small>ПЛАНЕТА</small><b id="planet">—</b></div>
+          <div><small>СТАТУС</small><b id="character-status">ОЖИДАНИЕ</b></div>
+        </div>
+      </section>
+
+      <div class="section-heading"><span>03 / УПРАВЛЕНИЕ БОТОМ</span><span class="muted">ЛОКАЛЬНЫЕ НАСТРОЙКИ</span></div>
+      <section class="panel controls">
+        <div class="control-row"><div><b>Получение сообщений</b><p>Подготовка к чтению входящих</p></div><label class="switch"><input type="checkbox" data-setting="messageMonitoring"><span></span></label></div>
+        <div class="control-row"><div><b>Автоответы</b><p>Ответы только после подключения и настройки</p></div><label class="switch"><input type="checkbox" data-setting="autoReply"><span></span></label></div>
+        <div class="control-row"><div><b>Уведомления</b><p>Запись событий в журнал</p></div><label class="switch"><input type="checkbox" data-setting="notifications" checked><span></span></label></div>
+        <p class="hint">Переключатели пока сохраняют настройки в этом браузере. Они не выполняют игровые действия без официального интерфейса интеграции.</p>
+      </section>
+
+      <div class="section-heading"><span>04 / ЖУРНАЛ</span><button class="text-button" id="clear-log">ОЧИСТИТЬ</button></div>
+      <section class="panel log-panel"><div id="log-list" aria-live="polite"></div></section>
+
+      <footer><span>ЧЁРТ AI</span><span>Безопасность прежде автоматизации.</span></footer>
+    </main>
+  </div>
 </body>
 </html>
