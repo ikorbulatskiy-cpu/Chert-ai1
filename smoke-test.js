@@ -72,6 +72,19 @@ async function main() {
     let payload = await response.json();
     assert.equal(payload.settings.notifications, false);
 
+    response = await request("/api/galaxy/import", {
+      method: "POST",
+      headers: auth,
+      body: JSON.stringify({ text: "Тестовое сообщение из Galaxy", pageTitle: "Ручной импорт", pageUrl: "https://galaxy.mobstudio.ru/web/" })
+    });
+    assert.equal(response.status, 201, "authenticated manual Galaxy import should succeed");
+    payload = await response.json();
+    assert.equal(payload.imported.characters, "Тестовое сообщение из Galaxy".length);
+    response = await request("/api/galaxy/imports?limit=5", { headers: auth });
+    assert.equal(response.status, 200, "manual imports should be readable");
+    payload = await response.json();
+    assert.ok(payload.entries.some(entry => entry.text === "Тестовое сообщение из Galaxy"));
+
     response = await request("/api/bot/start", { method: "POST", headers: auth });
     assert.equal(response.status, 200, "worker should start");
     await new Promise(resolve => setTimeout(resolve, 300));
