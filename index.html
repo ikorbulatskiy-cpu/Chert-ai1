@@ -60,13 +60,19 @@
       <div class="section-heading"><span>03 / ИМПОРТИРОВАННЫЕ ДАННЫЕ</span><button class="text-button" id="refresh-imports">ОБНОВИТЬ</button></div>
       <section class="panel log-panel"><div id="import-list"><p class="log-empty">Подключи API, чтобы просмотреть импорт.</p></div></section>
 
-      <div class="section-heading"><span>04 / GALAXY</span><span class="muted">ПУБЛИЧНАЯ ПРОВЕРКА</span></div>
+      <div class="section-heading"><span>04 / РАСПОЗНАННЫЕ ДИАЛОГИ</span><button class="text-button" id="process-imports">ОБРАБОТАТЬ НОВЫЙ ИМПОРТ</button></div>
+      <section class="panel log-panel">
+        <p class="hint" id="processing-state">Разбор поддерживает распространённые варианты «Имя: сообщение» и «время Имя: сообщение». Черновики ответов не отправляются автоматически.</p>
+        <div id="processed-list"><p class="log-empty">Пока нет обработанных сообщений.</p></div>
+      </section>
+
+      <div class="section-heading"><span>05 / GALAXY</span><span class="muted">ПУБЛИЧНАЯ ПРОВЕРКА</span></div>
       <section class="panel connection-panel">
         <div class="panel-title"><div><h2>Доступность сайта</h2><p id="galaxy-detail">Страница ещё не проверялась</p></div><span class="pill" id="galaxy-pill">НЕ ПРОВЕРЕНО</span></div>
         <button class="button button-primary" id="check-galaxy">Проверить доступность сайта</button>
       </section>
 
-      <div class="section-heading"><span>05 / НАСТРОЙКИ</span><span class="muted">BACKEND</span></div>
+      <div class="section-heading"><span>06 / НАСТРОЙКИ</span><span class="muted">BACKEND</span></div>
       <section class="panel controls">
         <div class="control-row"><div><b>Получение сообщений</b><p>Пока только ручной импорт выделенного текста</p></div><label class="switch"><input type="checkbox" data-setting="messageMonitoring"><span></span></label></div>
         <div class="control-row"><div><b>Автоответы</b><p>Не активны, отправка сообщений не реализована</p></div><label class="switch"><input type="checkbox" data-setting="autoReply"><span></span></label></div>
@@ -74,7 +80,7 @@
         <p class="hint" id="settings-state">Загрузка настроек…</p>
       </section>
 
-      <div class="section-heading"><span>06 / ЖУРНАЛ ДЕЙСТВИЙ</span><button class="text-button" id="refresh-log">ОБНОВИТЬ</button></div>
+      <div class="section-heading"><span>07 / ЖУРНАЛ ДЕЙСТВИЙ</span><button class="text-button" id="refresh-log">ОБНОВИТЬ</button></div>
       <section class="panel log-panel"><div id="log-list" aria-live="polite"><p class="log-empty">Загрузка журнала…</p></div></section>
       <footer><span>ЧЁРТ AI</span><span>Пользовательский мост · без паролей</span></footer>
     </main>
