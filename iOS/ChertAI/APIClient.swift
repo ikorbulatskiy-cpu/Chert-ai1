@@ -46,6 +46,7 @@ final class APIClient {
     var hasToken: Bool { (try? loadToken()) != nil }
 
     func saveToken(_ token: String) throws {
+        guard token.count >= 32 else { throw APIError.server("API-токен должен содержать не менее 32 символов.") }
         let data = Data(token.utf8)
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
