@@ -154,7 +154,7 @@ function parseGalaxyText(raw) {
 function loadConversations(){try{const v=JSON.parse(fs.readFileSync(CONVERSATIONS_FILE,"utf8"));return v&&typeof v==="object"&&!Array.isArray(v)?v:{};}catch{return {};}}
 function saveConversations(v){const t=CONVERSATIONS_FILE+".tmp";fs.writeFileSync(t,JSON.stringify(v),{mode:0o600});fs.renameSync(t,CONVERSATIONS_FILE);}
 function normalizeConversationKey(v){return String(v||"").normalize("NFKC").trim().replace(/\s+/g," ").slice(0,60)||"Без имени";}
-function appendConversation(key,name,messages,importId){const all=loadConversations(),c=all[key]||{key,characterName:name,updatedAt:null,messages:[]};for(const m of messages)c.messages.push({sender:m.sender,text:m.text,time:m.time||null,at:new Date().toISOString(),importId});c.messages=c.messages.slice(-200);c.updatedAt=new Date().toISOString();c.characterName=name||c.characterName||key;all[key]=c;saveConversations(all);return c;}
+function appendConversation(key,name,messages,importId,replyDraft=null){const all=loadConversations(),c=all[key]||{key,characterName:name,updatedAt:null,messages:[]};for(const m of messages)c.messages.push({sender:m.sender,text:m.text,time:m.time||null,at:new Date().toISOString(),importId});if(replyDraft&&replyDraft.text)c.messages.push({sender:"Chert AI (черновик)",text:replyDraft.text,time:null,at:new Date().toISOString(),importId,draftOnly:true});c.messages=c.messages.slice(-200);c.updatedAt=new Date().toISOString();c.characterName=name||c.characterName||key;all[key]=c;saveConversations(all);return c;}
 function suggestReplies(message) {
   const text = String(message.text || "").toLowerCase();
   if (/привет|здравствуй|добрый день|доброе утро|хай/.test(text)) return ["Привет! Как проходит твой день? 🙂", "Привет! Рад тебя видеть. Как дела?"];
@@ -329,7 +329,7 @@ const server = http.createServer(async (req, res) => {
       const source=aiText?"openai":result.replyDraft?"template":"none";
       if(result.replyDraft){if(aiText){result.replyDraft.text=aiText;result.replyDraft.options=[aiText];}result.replyDraft.provider=source;result.replyDraft.sourceLabel=source==="openai"?"OpenAI":"Шаблон";}
       result.ai={configured:Boolean(OPENAI_API_KEY),used:Boolean(aiText),source,model:OPENAI_MODEL,error:aiError};
-      const conversation=appendConversation(result.conversationKey,characterName,result.messages,entry.id);
+      const conversation=appendConversation(result.conversationKey,characterName,result.messages,entry.id,result.replyDraft);
       result.conversationMessageCount=conversation.messages.length;
       fs.appendFileSync(PROCESSED_FILE, JSON.stringify(result) + "\n", { mode: 0o600 });
       audit("galaxy.import_processed", { importId: entry.id, messages: result.messageCount, hasReplyDraft: Boolean(result.replyDraft), replySource: source, conversationKey: result.conversationKey });
