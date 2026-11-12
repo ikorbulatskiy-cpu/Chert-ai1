@@ -112,53 +112,64 @@ function statusPayload() {
     time: new Date().toISOString()
   };
 }
+function cleanGalaxyText(raw) {
+  return String(raw || "")
+    .replace(/\r/g, "")
+    .replace(/javascript\s*:[\s\S]*$/gi, "")
+    .split("\n")
+    .map(line => line.trim())
+    .filter(line => {
+      if (!line) return false;
+      if (/^(https?:\/\/|www\.)\S+$/i.test(line)) return false;
+      if (/^data:image\//i.test(line)) return false;
+      if (/^(?:const|let|var)\s+\w+\s*=|^\(?\s*\(\s*\)\s*=>|^fetch\s*\(|^document\.|^window\.|^alert\s*\(/i.test(line)) return false;
+      if (/^\{?\s*["']?(?:ok|error|status|backend)["']?\s*:/.test(line)) return false;
+      if (/^https?:\/\/\S+\.(?:png|jpe?g|gif|webp)(?:\?.*)?$/i.test(line)) return false;
+      return true;
+    })
+    .join("\n")
+    .trim();
+}
 function parseGalaxyText(raw) {
-  const lines = String(raw || "").replace(/\r/g, "").split("\n");
+  const cleaned = cleanGalaxyText(raw);
+  if (!cleaned) return [];
+  const lines = cleaned.split("\n");
   const messages = [];
-  const patterns = [
-    /^\s*\[?(\d{1,2}:\d{2})\]?\s+([^:]{1,60}):\s*(.*)$/,
-    /^\s*([^:]{1,60}):\s*(.*)$/
-  ];
-  for (const original of lines) {
-    const line = original.trim();
-    if (!line) continue;
-    let match = line.match(patterns[0]);
+  const timed = /^\s*\[?(\d{1,2}:\d{2})\]?\s+([^:]{1,60}):\s*(.+)$/;
+  const named = /^\s*([^:]{1,60}):\s*(.+)$/;
+  const looksLikeCode = line => /(?:=>|\b(?:function|async|await|return)\b|[{};]{2,}|document\.|window\.|fetch\()/i.test(line);
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line || looksLikeCode(line)) continue;
+    let match = line.match(timed);
     let time = null;
-    let sender = null;
-    let body = null;
+    if (match) time = match[1];
+    else match = line.match(named);
     if (match) {
-      time = match[1];
-      sender = match[2].trim();
-      body = match[3].trim();
-    } else {
-      match = line.match(patterns[1]);
-      if (match && !/^https?$/i.test(match[1].trim())) {
-        sender = match[1].trim();
-        body = match[2].trim();
+      const sender = (time ? match[2] : match[1]).trim();
+      const body = (time ? match[3] : match[2]).trim();
+      if (sender && body && !/^https?$/i.test(sender) && !/^javascript$/i.test(sender)) {
+        messages.push({ sender: sender.slice(0, 80), time, text: body.slice(0, 4000) });
+        continue;
       }
     }
-    if (sender && body) {
-      messages.push({ sender: sender.slice(0, 80), time, text: body.slice(0, 4000) });
-    } else if (messages.length) {
+    if (messages.length && !/^https?:\/\//i.test(line)) {
       messages[messages.length - 1].text = (messages[messages.length - 1].text + "\n" + line).slice(0, 4000);
-    } else {
+    } else if (!/^https?:\/\//i.test(line)) {
       messages.push({ sender: "Не определён", time: null, text: line.slice(0, 4000) });
     }
   }
-  if (!messages.length && String(raw || "").trim()) {
-    messages.push({ sender: "Не определён", time: null, text: String(raw).trim().slice(0, 4000) });
-  }
-  return messages.slice(0, 100);
+  return messages.filter(item => item.text.trim()).slice(0, 100);
 }
-function suggestReply(message) {
+function suggestReplies(message) {
   const text = String(message.text || "").toLowerCase();
-  if (/привет|здравствуй|добрый день|доброе утро|хай/.test(text)) return "Привет! Как проходит твой день?";
-  if (/как дела|как ты|как настроение/.test(text)) return "Всё нормально, спасибо 🙂 А у тебя как?";
-  if (/сколько лет|возраст/.test(text)) return "Могу рассказать о себе. А ты чем увлекаешься?";
-  if (/откуда|где жив[её]шь|город/.test(text)) return "Я живу в своём городе. А ты откуда?";
-  if (/пока|спокойной ночи|до встречи/.test(text)) return "До встречи! Хорошего тебе дня 🙂";
-  if (/\?$/.test(text)) return "Интересный вопрос. Расскажи немного подробнее 🙂";
-  return "Понял тебя 🙂 Расскажи об этом чуть подробнее.";
+  if (/привет|здравствуй|добрый день|доброе утро|хай/.test(text)) return ["Привет! Как проходит твой день? 🙂", "Привет! Рад тебя видеть. Как дела?"];
+  if (/как дела|как ты|как настроение/.test(text)) return ["Всё нормально, спасибо 🙂 А у тебя как?", "У меня всё хорошо. Чем сейчас занимаешься?"];
+  if (/сколько лет|возраст/.test(text)) return ["Могу рассказать о себе. А ты чем увлекаешься?", "А как думаешь? 🙂"];
+  if (/откуда|где жив[её]шь|город/.test(text)) return ["Я живу в своём городе. А ты откуда?", "А ты из какого города?"];
+  if (/пока|спокойной ночи|до встречи/.test(text)) return ["До встречи! Хорошего тебе дня 🙂", "Пока! Буду рад продолжить общение."];
+  if (/\?$/.test(text)) return ["Интересный вопрос. Расскажи немного подробнее 🙂", "Хочу понять тебя точнее. Что ты имеешь в виду?"];
+  return ["Понял тебя 🙂 Расскажи об этом чуть подробнее.", "Интересно. И что было дальше?", "Понимаю 🙂 А как ты сам к этому относишься?"];
 }
 function processImport(entry) {
   const messages = parseGalaxyText(entry.text);
@@ -172,7 +183,7 @@ function processImport(entry) {
     messages,
     messageCount: messages.length,
     conversationKey: entry.pageTitle || "Galaxy",
-    replyDraft: lastIncoming ? { forMessage: lastIncoming.text, text: suggestReply(lastIncoming), status: "draft_only" } : null,
+    replyDraft: lastIncoming ? { forMessage: lastIncoming.text, text: suggestReplies(lastIncoming)[0], options: suggestReplies(lastIncoming), status: "draft_only" } : null,
     note: "Распознавание эвристическое. Черновик не отправляется в Galaxy."
   };
 }
@@ -276,7 +287,7 @@ const server = http.createServer(async (req, res) => {
         text: content
       };
       fs.appendFileSync(IMPORT_FILE, JSON.stringify(entry) + "\n", { mode: 0o600 });
-      audit("galaxy.user_text_imported", { characters: content.length, pageUrl });
+      audit("galaxy.user_text_imported", { characters: cleaned.length, removedCharacters: content.length - cleaned.length, pageUrl });
       return send(res, 201, { ok: true, imported: { id: entry.id, characters: content.length, at: entry.at } }, cors);
     }
     if (url.pathname === "/api/galaxy/process" && req.method === "POST") {
