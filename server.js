@@ -49,14 +49,12 @@ function persistSettings() {
 }
 function audit(event, details = {}) {
   const row = { id: crypto.randomUUID(), at: new Date().toISOString(), event, details };
-  fs.appendFileSync(LOG_FILE, JSON.stringify(row) + "
-", { mode: 0o600 });
+  fs.appendFileSync(LOG_FILE, JSON.stringify(row) + "\\n", { mode: 0o600 });
   return row;
 }
 function readLogs(limit = 100) {
   try {
-    return fs.readFileSync(LOG_FILE, "utf8").trim().split("
-").filter(Boolean).slice(-limit).reverse().map(line => JSON.parse(line));
+    return fs.readFileSync(LOG_FILE, "utf8").trim().split("\\n").filter(Boolean).slice(-limit).reverse().map(line => JSON.parse(line));
   } catch { return []; }
 }
 function send(res, status, body) {
