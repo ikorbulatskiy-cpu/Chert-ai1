@@ -11,6 +11,7 @@ const DATA_DIR = process.env.CHERT_DATA_DIR || path.join(ROOT, "data");
 const SETTINGS_FILE = path.join(DATA_DIR, "settings.json");
 const LOG_FILE = path.join(DATA_DIR, "audit.jsonl");
 const IMPORT_FILE = path.join(DATA_DIR, "galaxy-imports.jsonl");
+const PROCESSED_FILE = path.join(DATA_DIR, "galaxy-processed.jsonl");
 const HOST = process.env.CHERT_HOST || "0.0.0.0";
 const PORT = Number(process.env.PORT || process.env.CHERT_PORT || 8787);
 const TOKEN = process.env.CHERT_API_TOKEN || "";
@@ -109,6 +110,70 @@ function statusPayload() {
     galaxy,
     integration: { mode: "user_selected_text_bridge", authenticated: false, profile: "manual_import_only", messages: "manual_import_only", note: "Импортируется только текст, который пользователь сам выделил на открытой странице Galaxy. Автоматическое чтение и отправка сообщений не выполняются." },
     time: new Date().toISOString()
+  };
+}
+function parseGalaxyText(raw) {
+  const lines = String(raw || "").replace(/\\r/g, "").split("\\n");
+  const messages = [];
+  const patterns = [
+    /^\\s*\\[?(\\d{1,2}:\\d{2})\\]?\\s+([^:]{1,60}):\\s*(.*)$/,
+    /^\\s*([^:]{1,60}):\\s*(.*)$/
+  ];
+  for (const original of lines) {
+    const line = original.trim();
+    if (!line) continue;
+    let match = line.match(patterns[0]);
+    let time = null;
+    let sender = null;
+    let body = null;
+    if (match) {
+      time = match[1];
+      sender = match[2].trim();
+      body = match[3].trim();
+    } else {
+      match = line.match(patterns[1]);
+      if (match && !/^https?$/i.test(match[1].trim())) {
+        sender = match[1].trim();
+        body = match[2].trim();
+      }
+    }
+    if (sender && body) {
+      messages.push({ sender: sender.slice(0, 80), time, text: body.slice(0, 4000) });
+    } else if (messages.length) {
+      messages[messages.length - 1].text = (messages[messages.length - 1].text + "\\n" + line).slice(0, 4000);
+    } else {
+      messages.push({ sender: "Не определён", time: null, text: line.slice(0, 4000) });
+    }
+  }
+  if (!messages.length && String(raw || "").trim()) {
+    messages.push({ sender: "Не определён", time: null, text: String(raw).trim().slice(0, 4000) });
+  }
+  return messages.slice(0, 100);
+}
+function suggestReply(message) {
+  const text = String(message.text || "").toLowerCase();
+  if (/привет|здравствуй|добрый день|доброе утро|хай/.test(text)) return "Привет! Как проходит твой день?";
+  if (/как дела|как ты|как настроение/.test(text)) return "Всё нормально, спасибо 🙂 А у тебя как?";
+  if (/сколько лет|возраст/.test(text)) return "Могу рассказать о себе. А ты чем увлекаешься?";
+  if (/откуда|где жив[её]шь|город/.test(text)) return "Я живу в своём городе. А ты откуда?";
+  if (/пока|спокойной ночи|до встречи/.test(text)) return "До встречи! Хорошего тебе дня 🙂";
+  if (/\?$/.test(text)) return "Интересный вопрос. Расскажи немного подробнее 🙂";
+  return "Понял тебя 🙂 Расскажи об этом чуть подробнее.";
+}
+function processImport(entry) {
+  const messages = parseGalaxyText(entry.text);
+  const lastIncoming = [...messages].reverse().find(message => !/^(я|me|you)$/i.test(message.sender.trim()));
+  return {
+    id: crypto.randomUUID(),
+    importId: entry.id,
+    at: new Date().toISOString(),
+    source: entry.source,
+    pageTitle: entry.pageTitle,
+    messages,
+    messageCount: messages.length,
+    conversationKey: entry.pageTitle || "Galaxy",
+    replyDraft: lastIncoming ? { forMessage: lastIncoming.text, text: suggestReply(lastIncoming), status: "draft_only" } : null,
+    note: "Распознавание эвристическое. Черновик не отправляется в Galaxy."
   };
 }
 async function checkGalaxy() {
@@ -213,6 +278,25 @@ const server = http.createServer(async (req, res) => {
       fs.appendFileSync(IMPORT_FILE, JSON.stringify(entry) + "\n", { mode: 0o600 });
       audit("galaxy.user_text_imported", { characters: content.length, pageUrl });
       return send(res, 201, { ok: true, imported: { id: entry.id, characters: content.length, at: entry.at } }, cors);
+    }
+    if (url.pathname === "/api/galaxy/process" && req.method === "POST") {
+      const input = await bodyJson(req);
+      const imports = readJsonLines(IMPORT_FILE, 1000);
+      const processed = readJsonLines(PROCESSED_FILE, 1000);
+      const known = new Set(processed.map(item => item.importId));
+      const entry = input.importId
+        ? imports.find(item => item.id === input.importId)
+        : imports.find(item => !known.has(item.id));
+      if (!entry) return send(res, 404, { error: "Нет нового импорта для обработки" });
+      if (known.has(entry.id)) return send(res, 200, { ok: true, alreadyProcessed: true, processed: processed.find(item => item.importId === entry.id) });
+      const result = processImport(entry);
+      fs.appendFileSync(PROCESSED_FILE, JSON.stringify(result) + "\\n", { mode: 0o600 });
+      audit("galaxy.import_processed", { importId: entry.id, messages: result.messageCount, hasReplyDraft: Boolean(result.replyDraft) });
+      return send(res, 201, { ok: true, processed: result });
+    }
+    if (url.pathname === "/api/galaxy/processed" && req.method === "GET") {
+      const limit = Math.min(100, Math.max(1, Number(url.searchParams.get("limit") || 20)));
+      return send(res, 200, { entries: readJsonLines(PROCESSED_FILE, limit) });
     }
     if (url.pathname === "/api/galaxy/imports" && req.method === "GET") {
       const limit = Math.min(50, Math.max(1, Number(url.searchParams.get("limit") || 20)));
