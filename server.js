@@ -10,10 +10,12 @@ const ROOT = __dirname;
 const DATA_DIR = process.env.CHERT_DATA_DIR || path.join(ROOT, "data");
 const SETTINGS_FILE = path.join(DATA_DIR, "settings.json");
 const LOG_FILE = path.join(DATA_DIR, "audit.jsonl");
+const IMPORT_FILE = path.join(DATA_DIR, "galaxy-imports.jsonl");
 const HOST = process.env.CHERT_HOST || "0.0.0.0";
 const PORT = Number(process.env.PORT || process.env.CHERT_PORT || 8787);
 const TOKEN = process.env.CHERT_API_TOKEN || "";
 const DEFAULTS = { messageMonitoring: false, autoReply: false, notifications: true };
+const GALAXY_ORIGIN = "https://galaxy.mobstudio.ru";
 
 const isLoopbackHost = HOST === "127.0.0.1" || HOST === "localhost" || HOST === "::1";
 if (!Number.isInteger(PORT) || PORT < 1 || PORT > 65535) {
@@ -49,20 +51,33 @@ function persistSettings() {
 }
 function audit(event, details = {}) {
   const row = { id: crypto.randomUUID(), at: new Date().toISOString(), event, details };
-  fs.appendFileSync(LOG_FILE, JSON.stringify(row) + "\\n", { mode: 0o600 });
+  fs.appendFileSync(LOG_FILE, JSON.stringify(row) + "\n", { mode: 0o600 });
   return row;
 }
-function readLogs(limit = 100) {
+function readJsonLines(file, limit = 100) {
   try {
-    return fs.readFileSync(LOG_FILE, "utf8").trim().split("\\n").filter(Boolean).slice(-limit).reverse().map(line => JSON.parse(line));
+    return fs.readFileSync(file, "utf8").split("\n").filter(Boolean).slice(-limit).reverse().map(line => JSON.parse(line));
   } catch { return []; }
 }
-function send(res, status, body) {
-  res.writeHead(status, { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "x-content-type-options": "nosniff" });
+function readLogs(limit = 100) {
+  return readJsonLines(LOG_FILE, limit);
+}
+function send(res, status, body, extraHeaders = {}) {
+  res.writeHead(status, { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "x-content-type-options": "nosniff", ...extraHeaders });
   res.end(JSON.stringify(body));
 }
+function corsHeaders(req) {
+  if (req.headers.origin !== GALAXY_ORIGIN) return {};
+  return {
+    "access-control-allow-origin": GALAXY_ORIGIN,
+    "access-control-allow-methods": "POST, OPTIONS",
+    "access-control-allow-headers": "authorization, content-type",
+    "access-control-max-age": "600",
+    "vary": "Origin"
+  };
+}
 function authorized(req) {
-  if (!TOKEN) return HOST === "127.0.0.1" || HOST === "localhost" || HOST === "::1";
+  if (!TOKEN) return isLoopbackHost;
   const supplied = req.headers.authorization || "";
   const expected = "Bearer " + TOKEN;
   return supplied.length === expected.length && crypto.timingSafeEqual(Buffer.from(supplied), Buffer.from(expected));
@@ -92,7 +107,7 @@ function statusPayload() {
     bot: { ...bot, uptimeSeconds: bot.startedAt ? Math.floor((Date.now() - Date.parse(bot.startedAt)) / 1000) : 0 },
     settings,
     galaxy,
-    integration: { mode: "web_probe_only", authenticated: false, profile: "unavailable", messages: "unavailable", note: "Проверяется только доступность публичной страницы. Доступ к аккаунту и игровые действия не реализованы." },
+    integration: { mode: "user_selected_text_bridge", authenticated: false, profile: "manual_import_only", messages: "manual_import_only", note: "Импортируется только текст, который пользователь сам выделил на открытой странице Galaxy. Автоматическое чтение и отправка сообщений не выполняются." },
     time: new Date().toISOString()
   };
 }
@@ -100,7 +115,7 @@ async function checkGalaxy() {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
   try {
-    const response = await fetch("https://galaxy.mobstudio.ru/web/", {
+    const response = await fetch(GALAXY_ORIGIN + "/web/", {
       method: "GET",
       redirect: "manual",
       signal: controller.signal,
@@ -124,10 +139,18 @@ const server = http.createServer(async (req, res) => {
   const ip = req.socket.remoteAddress || "unknown";
   if (!rateAllowed(ip)) return send(res, 429, { error: "Слишком много запросов" });
   const url = new URL(req.url, "http://localhost");
+  const isGalaxyImport = url.pathname === "/api/galaxy/import";
+  const cors = isGalaxyImport ? corsHeaders(req) : {};
+
+  if (isGalaxyImport && req.method === "OPTIONS") {
+    if (!req.headers.origin || req.headers.origin !== GALAXY_ORIGIN) return send(res, 403, { error: "Origin not allowed" });
+    res.writeHead(204, cors);
+    return res.end();
+  }
   try {
     if (url.pathname.startsWith("/api/") && url.pathname !== "/api/health" && !authorized(req)) {
       audit("security.unauthorized_request", { method: req.method, path: url.pathname });
-      return send(res, 401, { error: "Требуется корректный API-токен" });
+      return send(res, 401, { error: "Требуется корректный API-токен" }, cors);
     }
     if (url.pathname === "/api/health" && req.method === "GET") return send(res, 200, { ok: true, backend: "online" });
     if (url.pathname === "/api/status" && req.method === "GET") return send(res, 200, statusPayload());
@@ -174,6 +197,28 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: true, bot });
     }
     if (url.pathname === "/api/galaxy/check" && req.method === "POST") return send(res, 200, { ok: true, galaxy: await checkGalaxy() });
+    if (isGalaxyImport && req.method === "POST") {
+      if (req.headers.origin !== GALAXY_ORIGIN) return send(res, 403, { error: "Импорт разрешён только со страницы Galaxy" }, cors);
+      const input = await bodyJson(req);
+      const content = typeof input.text === "string" ? input.text.trim() : "";
+      if (!content || content.length > 8000) return send(res, 400, { error: "Выделенный текст должен содержать от 1 до 8000 символов" }, cors);
+      const pageUrl = typeof input.pageUrl === "string" && input.pageUrl.startsWith(GALAXY_ORIGIN + "/") ? input.pageUrl.slice(0, 500) : GALAXY_ORIGIN + "/web/";
+      const entry = {
+        id: crypto.randomUUID(),
+        at: new Date().toISOString(),
+        source: "user_selection",
+        pageTitle: typeof input.pageTitle === "string" ? input.pageTitle.slice(0, 200) : "Galaxy",
+        pageUrl,
+        text: content
+      };
+      fs.appendFileSync(IMPORT_FILE, JSON.stringify(entry) + "\n", { mode: 0o600 });
+      audit("galaxy.user_text_imported", { characters: content.length, pageUrl });
+      return send(res, 201, { ok: true, imported: { id: entry.id, characters: content.length, at: entry.at } }, cors);
+    }
+    if (url.pathname === "/api/galaxy/imports" && req.method === "GET") {
+      const limit = Math.min(50, Math.max(1, Number(url.searchParams.get("limit") || 20)));
+      return send(res, 200, { entries: readJsonLines(IMPORT_FILE, limit) });
+    }
     if (url.pathname === "/api/logs" && req.method === "GET") {
       const limit = Math.min(200, Math.max(1, Number(url.searchParams.get("limit") || 100)));
       return send(res, 200, { entries: readLogs(limit) });
@@ -190,7 +235,7 @@ const server = http.createServer(async (req, res) => {
     });
   } catch (error) {
     audit("api.error", { message: error.message, path: url.pathname });
-    send(res, error.status || 500, { error: error.status ? error.message : "Внутренняя ошибка сервера" });
+    send(res, error.status || 500, { error: error.status ? error.message : "Внутренняя ошибка сервера" }, cors);
   }
 });
 
