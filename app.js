@@ -281,6 +281,11 @@
       button.textContent = "Обработать новый импорт";
     }
   });
+  if ("serviceWorker" in navigator && location.protocol === "https:") {
+    window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(error => {
+      console.warn("PWA service worker registration failed:", error);
+    }));
+  }
   refreshAll();
   setInterval(() => {
     if (!backendOnline) return;
