@@ -297,7 +297,8 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === "/api/galaxy/check" && req.method === "POST") return send(res, 200, { ok: true, galaxy: await checkGalaxy() });
     if (isGalaxyImport && req.method === "POST") {
       const input = await bodyJson(req);
-      const content = typeof input.text === "string" ? input.text.trim() : "";
+      const rawContent = typeof input.text === "string" ? input.text.trim() : "";
+      const content = cleanGalaxyText(rawContent);
       if (!content || content.length > 8000) return send(res, 400, { error: "Выделенный текст должен содержать от 1 до 8000 символов" }, cors);
       const pageUrl = typeof input.pageUrl === "string" && input.pageUrl.startsWith(GALAXY_ORIGIN + "/") ? input.pageUrl.slice(0, 500) : GALAXY_ORIGIN + "/web/";
       const entry = {
@@ -323,6 +324,9 @@ const server = http.createServer(async (req, res) => {
       if (!entry) return send(res, 404, { error: "Нет нового импорта для обработки" });
       if (known.has(entry.id)) return send(res, 200, { ok: true, alreadyProcessed: true, processed: processed.find(item => item.importId === entry.id) });
       const result = processImport(entry);
+      const aiText = await generateAiReply(result.messages);
+      if (aiText && result.replyDraft) { result.replyDraft.text = aiText; result.replyDraft.options = [aiText]; result.replyDraft.provider = "openai_responses"; }
+      result.ai = { configured: Boolean(OPENAI_API_KEY), used: Boolean(aiText), model: OPENAI_MODEL };
       fs.appendFileSync(PROCESSED_FILE, JSON.stringify(result) + "\n", { mode: 0o600 });
       audit("galaxy.import_processed", { importId: entry.id, messages: result.messageCount, hasReplyDraft: Boolean(result.replyDraft) });
       return send(res, 201, { ok: true, processed: result });
