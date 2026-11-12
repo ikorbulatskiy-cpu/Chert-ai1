@@ -99,34 +99,40 @@
     }
   }
 
-  function makeBookmarklet() {
-    const bridge = function () {
-      const selected = String(window.getSelection() || "").trim();
-      if (!selected) { alert("Сначала выдели текст на странице Galaxy."); return; }
-      if (location.origin !== "https://galaxy.mobstudio.ru") { alert("Открой официальный сайт Galaxy перед запуском закладки."); return; }
-      const token = prompt("Введи API-токен Chert AI. Токен отправится только на chert-ai1.onrender.com и не будет сохранён на сайте.");
-      if (!token) return;
-      fetch("https://chert-ai1.onrender.com/api/galaxy/import", {
-        method: "POST",
-        headers: { "content-type": "application/json", "authorization": "Bearer " + token },
-        body: JSON.stringify({ text: selected, pageTitle: document.title, pageUrl: location.href })
-      }).then(async response => {
-        const result = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(result.error || "HTTP " + response.status);
-        alert("Chert AI: импортировано " + result.imported.characters + " символов. Вернись в панель и обнови импорт.");
-      }).catch(error => alert("Импорт не выполнен: " + error.message));
-    };
-    return "javascript:" + encodeURIComponent("(" + bridge.toString() + ")()");
-  }
-  $("#bookmarklet-code").value = makeBookmarklet();
-  $("#copy-bookmarklet").addEventListener("click", async () => {
+  $("#galaxy-text").addEventListener("input", () => {
+    $("#galaxy-char-count").textContent = $("#galaxy-text").value.length + " / 8000";
+  });
+  $("#import-galaxy-text").addEventListener("click", async () => {
+    const button = $("#import-galaxy-text");
+    const text = $("#galaxy-text").value.trim();
+    if (!apiToken) {
+      $("#bridge-state").textContent = "Сначала подключи защищённый API выше.";
+      return;
+    }
+    if (!text) {
+      $("#bridge-state").textContent = "Сначала вставь скопированный текст из Galaxy.";
+      return;
+    }
+    button.disabled = true;
+    button.textContent = "Импорт…";
     try {
-      await navigator.clipboard.writeText($("#bookmarklet-code").value);
-      $("#bridge-state").textContent = "Код скопирован. Создай закладку Safari и вставь код в поле адреса.";
-    } catch {
-      $("#bookmarklet-code").focus();
-      $("#bookmarklet-code").select();
-      $("#bridge-state").textContent = "Автокопирование недоступно. Выдели код в поле и скопируй вручную.";
+      const result = await api("/api/galaxy/import", {
+        method: "POST",
+        body: JSON.stringify({
+          text,
+          pageTitle: "Ручной импорт из Galaxy",
+          pageUrl: "https://galaxy.mobstudio.ru/web/"
+        })
+      });
+      $("#bridge-state").textContent = "Импортировано " + result.imported.characters + " символов. Данные сохранены на backend.";
+      $("#galaxy-text").value = "";
+      $("#galaxy-char-count").textContent = "0 / 8000";
+      await Promise.all([refreshImports(), refreshLogs()]);
+    } catch (error) {
+      $("#bridge-state").textContent = "Импорт не выполнен: " + error.message;
+    } finally {
+      button.disabled = false;
+      button.textContent = "Импортировать текст";
     }
   });
 
