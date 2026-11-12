@@ -1,0 +1,19 @@
+name: iOS project validation
+
+on:
+  push:
+    paths:
+      - "iOS/**"
+      - ".github/workflows/ios-build.yml"
+  pull_request:
+    paths:
+      - "iOS/**"
+      - ".github/workflows/ios-build.yml"
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build iOS simulator app
+        run: xcodebuild -project iOS/ChertAI.xcodeproj -scheme ChertAI -sdk iphonesimulator -configuration Debug CODE_SIGNING_ALLOWED=NO build
