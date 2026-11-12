@@ -95,11 +95,11 @@ function rateAllowed(ip) {
   hits.set(ip, item);
   return item.count <= 120;
 }
-async function bodyJson(req) {
+async function bodyJson(req, maxBytes = 16_384) {
   let raw = "";
   for await (const chunk of req) {
     raw += chunk;
-    if (raw.length > 16_384) throw Object.assign(new Error("Тело запроса слишком большое"), { status: 413 });
+    if (raw.length > maxBytes) throw Object.assign(new Error("Тело запроса слишком большое"), { status: 413 });
   }
   try { return raw ? JSON.parse(raw) : {}; }
   catch { throw Object.assign(new Error("Некорректный JSON"), { status: 400 }); }
@@ -293,7 +293,7 @@ const server = http.createServer(async (req, res) => {
     }
     if (url.pathname === "/api/galaxy/check" && req.method === "POST") return send(res, 200, { ok: true, galaxy: await checkGalaxy() });
     if (isGalaxyDiagnostic && req.method === "POST") {
-      const input = await bodyJson(req);
+      const input = await bodyJson(req, 65_536);
       const safe = {
         at: new Date().toISOString(),
         page: typeof input.url === "string" ? input.url.slice(0, 300) : "",
