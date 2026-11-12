@@ -175,6 +175,19 @@
       $("#bookmarklet-state").textContent = "Автокопирование недоступно. Выдели код в поле и скопируй вручную.";
     }
   });
+  const replyBookmarkletSource = `javascript:(()=>{if(location.origin!=="https://galaxy.mobstudio.ru"){alert("Открой официальный Galaxy.");return;}const reply=prompt("Вставь готовый ответ из Chert AI. Закладка только заполнит поле, отправка останется за тобой.");if(reply===null||!reply.trim())return;const visible=e=>{const r=e.getBoundingClientRect(),s=getComputedStyle(e);return r.width>0&&r.height>0&&s.visibility!=="hidden"&&s.display!=="none";};const active=document.activeElement;const valid=e=>e&&((e.matches&&e.matches("textarea,input:not([type]),input[type=text],input[type=search]"))&&!e.disabled&&!e.readOnly||e.isContentEditable);let target=valid(active)&&visible(active)?active:null;if(!target){const candidates=[...document.querySelectorAll("textarea,input:not([type]),input[type=text],input[type=search],[contenteditable=true]")].filter(e=>valid(e)&&visible(e));if(candidates.length===1)target=candidates[0];}if(!target){alert("Не удалось однозначно найти поле сообщения. Нажми на поле ввода в Galaxy и запусти закладку ещё раз.");return;}target.focus();if(target.isContentEditable){target.textContent=reply;}else{const setter=Object.getOwnPropertyDescriptor(target.tagName==="TEXTAREA"?HTMLTextAreaElement.prototype:HTMLInputElement.prototype,"value").set;setter.call(target,reply);}target.dispatchEvent(new InputEvent("input",{bubbles:true,inputType:"insertText",data:reply}));target.dispatchEvent(new Event("change",{bubbles:true}));alert("Черновик вставлен в поле Galaxy. Проверь текст и нажми «Отправить» самостоятельно.");})();`;
+  $("#reply-bookmarklet-code").value = replyBookmarkletSource;
+  $("#copy-reply-bookmarklet").addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(replyBookmarkletSource);
+      $("#reply-bookmarklet-state").textContent = "Закладка скопирована. Сохрани её в Safari так же, как первую.";
+    } catch {
+      $("#reply-bookmarklet-code").focus();
+      $("#reply-bookmarklet-code").select();
+      $("#reply-bookmarklet-state").textContent = "Выдели код в поле и скопируй вручную.";
+    }
+  });
+
   $("#galaxy-text").addEventListener("input", () => {
     $("#galaxy-char-count").textContent = $("#galaxy-text").value.length + " / 8000";
   });
