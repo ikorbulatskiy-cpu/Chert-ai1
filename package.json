@@ -2,12 +2,13 @@
   "name": "chert-ai1",
   "version": "1.0.0",
   "private": true,
-  "description": "Chert AI local backend and Galaxy public-page availability probe",
+  "description": "Chert AI backend and Galaxy public-page availability probe",
   "scripts": {
     "start": "node server.js",
-    "check": "node --check server.js && node --check bot-worker.js && node --check app.js"
+    "check": "node --check server.js && node --check bot-worker.js && node --check app.js && node --check smoke-test.js",
+    "test": "node smoke-test.js"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   }
-}
+}\n
