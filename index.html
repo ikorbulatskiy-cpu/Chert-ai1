@@ -68,6 +68,13 @@
           <button class="button button-secondary" id="copy-bookmarklet" type="button">Скопировать код закладки</button>
           <p class="hint" id="bookmarklet-state">Токен будет запрошен при запуске закладки и не сохранится в ней.</p>
         </div>
+        <div class="bridge-bookmarklet">
+          <label class="token-label" for="reply-bookmarklet-code">ЗАПОЛНЕНИЕ ПОЛЯ ОТВЕТА</label>
+          <p class="hint">После генерации черновика скопируй ответ в Chert AI. В Galaxy открой нужный диалог, запусти эту закладку и вставь ответ в появившееся окно. Закладка заполнит поле сообщения, но не нажмёт «Отправить».</p>
+          <textarea id="reply-bookmarklet-code" class="token-input paste-input" readonly spellcheck="false"></textarea>
+          <button class="button button-secondary" id="copy-reply-bookmarklet" type="button">Скопировать закладку для ответа</button>
+          <p class="hint" id="reply-bookmarklet-state">Перед запуском открой диалог. Отправка остаётся под твоим контролем.</p>
+        </div>
 
       </section>
 
