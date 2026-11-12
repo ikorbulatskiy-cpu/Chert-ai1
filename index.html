@@ -18,12 +18,20 @@
       <section class="hero">
         <div class="eyebrow">ПАНЕЛЬ УПРАВЛЕНИЯ</div>
         <h1>Твой игровой<br><em>напарник.</em></h1>
-        <p>Локальный backend, управление ботом и проверка доступности Galaxy.</p>
+        <p>Backend, управление worker-процессом и пользовательский мост для данных Galaxy.</p>
         <a class="primary-link" href="https://galaxy.mobstudio.ru/web/" target="_blank" rel="noopener noreferrer">Открыть официальный Galaxy <span>↗</span></a>
       </section>
-      <section class="notice" role="status"><span class="notice-icon">!</span><div><b>Подключение к игровому аккаунту не выполнено</b><p>Backend не получает пароль, cookies или токены. Проверка Galaxy касается только публичной страницы.</p></div></section>
+      <section class="notice" role="status"><span class="notice-icon">!</span><div><b>Вход выполняется только на официальном сайте</b><p>Chert AI не получает пароль, cookies или токены сессии. Импортируются только данные, которые ты сам выделяешь на странице.</p></div></section>
 
-      <section class="panel auth-panel">\n        <div class="panel-title"><div><h2>Защищённое управление</h2><p>Вставь API-токен из Render. Он не отправляется в чат и не сохраняется в браузере.</p></div></div>\n        <label class="token-label" for="api-token">API TOKEN</label>\n        <input id="api-token" class="token-input" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Вставь секретный токен">\n        <div class="auth-actions"><button class="button button-primary" id="connect-api">Подключить API</button><button class="button button-secondary" id="disconnect-api">Отключить</button></div>\n        <p class="hint" id="api-auth-state">Защищённые функции пока не подключены.</p>\n      </section>\n\n      <div class="section-heading"><span>01 / BACKEND И БОТ</span><span class="muted">ФОНОВЫЙ ПРОЦЕСС</span></div>
+      <section class="panel auth-panel">
+        <div class="panel-title"><div><h2>Защищённое управление</h2><p>API-токен вводится в этой вкладке и хранится только в её памяти.</p></div></div>
+        <label class="token-label" for="api-token">API TOKEN</label>
+        <input id="api-token" class="token-input" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Вставь секретный токен">
+        <div class="auth-actions"><button class="button button-primary" id="connect-api">Подключить API</button><button class="button button-secondary" id="disconnect-api">Отключить</button></div>
+        <p class="hint" id="api-auth-state">Защищённые функции пока не подключены.</p>
+      </section>
+
+      <div class="section-heading"><span>01 / BACKEND И WORKER</span><span class="muted">СОСТОЯНИЕ</span></div>
       <section class="panel">
         <div class="panel-title"><div><h2>Состояние системы</h2><p id="backend-detail">Ожидание ответа backend</p></div><span class="pill" id="backend-pill">НЕ ПРОВЕРЕН</span></div>
         <div class="stats">
@@ -31,31 +39,45 @@
           <div><small>WORKER</small><b id="bot-value">ОСТАНОВЛЕН</b></div>
           <div><small>UPTIME</small><b id="uptime-value">—</b></div>
         </div>
-        <div class="actions"><button class="button button-primary" id="start-bot">Запустить бота</button><button class="button button-secondary" id="stop-bot">Остановить</button></div>
-        <p class="hint">Кнопки управляют только фоновым worker-процессом. Подключения к игровому аккаунту и игровых действий пока нет.</p>
+        <div class="actions"><button class="button button-primary" id="start-bot">Запустить worker</button><button class="button button-secondary" id="stop-bot">Остановить</button></div>
+        <p class="hint">Worker пока является фоновым процессом heartbeat. Сам по себе он не входит в игру и не выполняет игровые действия.</p>
       </section>
 
-      <div class="section-heading"><span>02 / GALAXY</span><span class="muted">ПУБЛИЧНАЯ ПРОВЕРКА</span></div>
+      <div class="section-heading"><span>02 / ПОДКЛЮЧЕНИЕ GALAXY</span><span class="muted">БРАУЗЕРНЫЙ МОСТ</span></div>
+      <section class="panel">
+        <div class="panel-title"><div><h2>Импорт выделенного текста</h2><p>Работает из открытой вкладки официального Galaxy.</p></div><span class="pill">РУЧНОЙ РЕЖИМ</span></div>
+        <ol class="steps">
+          <li><span>1</span>Подключи API-токен выше.</li>
+          <li><span>2</span>Скопируй код закладки и создай закладку Safari с этим адресом.</li>
+          <li><span>3</span>Открой Galaxy, войди на официальном сайте и выдели нужный текст профиля или сообщения.</li>
+          <li><span>4</span>Запусти закладку. Введи API-токен в запросе. Будет отправлено только выделение.</li>
+        </ol>
+        <label class="token-label" for="bookmarklet-code">КОД ЗАКЛАДКИ SAFARI</label>
+        <textarea id="bookmarklet-code" class="token-input code-input" readonly spellcheck="false"></textarea>
+        <button class="button button-primary" id="copy-bookmarklet">Скопировать код закладки</button>
+        <p class="hint" id="bridge-state">Мост не читает cookies, localStorage, скрытые поля и не нажимает кнопки сайта. Отправка игровых сообщений не реализована.</p>
+      </section>
+
+      <div class="section-heading"><span>03 / ИМПОРТИРОВАННЫЕ ДАННЫЕ</span><button class="text-button" id="refresh-imports">ОБНОВИТЬ</button></div>
+      <section class="panel log-panel"><div id="import-list"><p class="log-empty">Подключи API, чтобы просмотреть импорт.</p></div></section>
+
+      <div class="section-heading"><span>04 / GALAXY</span><span class="muted">ПУБЛИЧНАЯ ПРОВЕРКА</span></div>
       <section class="panel connection-panel">
-        <div class="panel-title"><div><h2>Galaxy of Dating</h2><p id="galaxy-detail">Страница ещё не проверялась</p></div><span class="pill" id="galaxy-pill">НЕ ПРОВЕРЕНО</span></div>
+        <div class="panel-title"><div><h2>Доступность сайта</h2><p id="galaxy-detail">Страница ещё не проверялась</p></div><span class="pill" id="galaxy-pill">НЕ ПРОВЕРЕНО</span></div>
         <button class="button button-primary" id="check-galaxy">Проверить доступность сайта</button>
-        <p class="hint">Проверка не входит в аккаунт и не читает профиль или сообщения. Данные персонажа: <b>недоступны</b>. Сообщения: <b>недоступны</b>.</p>
       </section>
 
-      <div class="section-heading"><span>03 / ПЕРСОНАЖ</span><span class="muted">ДАННЫЕ ИГРЫ</span></div>
-      <section class="panel"><div class="empty-state"><div class="avatar">?</div><div><b>Персонаж не загружен</b><p>Нет разрешённого интерфейса чтения данных аккаунта.</p></div></div><div class="stats"><div><small>УРОВЕНЬ</small><b>—</b></div><div><small>ПЛАНЕТА</small><b>—</b></div><div><small>СТАТУС</small><b>НЕДОСТУПЕН</b></div></div></section>
-
-      <div class="section-heading"><span>04 / УПРАВЛЕНИЕ</span><span class="muted">НАСТРОЙКИ BACKEND</span></div>
+      <div class="section-heading"><span>05 / НАСТРОЙКИ</span><span class="muted">BACKEND</span></div>
       <section class="panel controls">
-        <div class="control-row"><div><b>Получение сообщений</b><p>Сохранение настройки, без чтения игры</p></div><label class="switch"><input type="checkbox" data-setting="messageMonitoring"><span></span></label></div>
-        <div class="control-row"><div><b>Автоответы</b><p>Настройка сохранится, отправка отключена</p></div><label class="switch"><input type="checkbox" data-setting="autoReply"><span></span></label></div>
+        <div class="control-row"><div><b>Получение сообщений</b><p>Пока только ручной импорт выделенного текста</p></div><label class="switch"><input type="checkbox" data-setting="messageMonitoring"><span></span></label></div>
+        <div class="control-row"><div><b>Автоответы</b><p>Не активны, отправка сообщений не реализована</p></div><label class="switch"><input type="checkbox" data-setting="autoReply"><span></span></label></div>
         <div class="control-row"><div><b>Уведомления</b><p>Запись событий в журнал</p></div><label class="switch"><input type="checkbox" data-setting="notifications" checked><span></span></label></div>
         <p class="hint" id="settings-state">Загрузка настроек…</p>
       </section>
 
-      <div class="section-heading"><span>05 / ЖУРНАЛ ДЕЙСТВИЙ</span><button class="text-button" id="refresh-log">ОБНОВИТЬ</button></div>
+      <div class="section-heading"><span>06 / ЖУРНАЛ ДЕЙСТВИЙ</span><button class="text-button" id="refresh-log">ОБНОВИТЬ</button></div>
       <section class="panel log-panel"><div id="log-list" aria-live="polite"><p class="log-empty">Загрузка журнала…</p></div></section>
-      <footer><span>ЧЁРТ AI</span><span>Локальный backend · без паролей</span></footer>
+      <footer><span>ЧЁРТ AI</span><span>Пользовательский мост · без паролей</span></footer>
     </main>
   </div>
 </body>
