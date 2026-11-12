@@ -113,11 +113,11 @@ function statusPayload() {
   };
 }
 function parseGalaxyText(raw) {
-  const lines = String(raw || "").replace(/\\r/g, "").split("\\n");
+  const lines = String(raw || "").replace(/\r/g, "").split("\n");
   const messages = [];
   const patterns = [
-    /^\\s*\\[?(\\d{1,2}:\\d{2})\\]?\\s+([^:]{1,60}):\\s*(.*)$/,
-    /^\\s*([^:]{1,60}):\\s*(.*)$/
+    /^\s*\[?(\d{1,2}:\d{2})\]?\s+([^:]{1,60}):\s*(.*)$/,
+    /^\s*([^:]{1,60}):\s*(.*)$/
   ];
   for (const original of lines) {
     const line = original.trim();
@@ -140,7 +140,7 @@ function parseGalaxyText(raw) {
     if (sender && body) {
       messages.push({ sender: sender.slice(0, 80), time, text: body.slice(0, 4000) });
     } else if (messages.length) {
-      messages[messages.length - 1].text = (messages[messages.length - 1].text + "\\n" + line).slice(0, 4000);
+      messages[messages.length - 1].text = (messages[messages.length - 1].text + "\n" + line).slice(0, 4000);
     } else {
       messages.push({ sender: "Не определён", time: null, text: line.slice(0, 4000) });
     }
@@ -290,7 +290,7 @@ const server = http.createServer(async (req, res) => {
       if (!entry) return send(res, 404, { error: "Нет нового импорта для обработки" });
       if (known.has(entry.id)) return send(res, 200, { ok: true, alreadyProcessed: true, processed: processed.find(item => item.importId === entry.id) });
       const result = processImport(entry);
-      fs.appendFileSync(PROCESSED_FILE, JSON.stringify(result) + "\\n", { mode: 0o600 });
+      fs.appendFileSync(PROCESSED_FILE, JSON.stringify(result) + "\n", { mode: 0o600 });
       audit("galaxy.import_processed", { importId: entry.id, messages: result.messageCount, hasReplyDraft: Boolean(result.replyDraft) });
       return send(res, 201, { ok: true, processed: result });
     }
