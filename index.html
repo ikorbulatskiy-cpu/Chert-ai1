@@ -23,16 +23,16 @@
       </section>
       <section class="notice" role="status"><span class="notice-icon">!</span><div><b>Подключение к игровому аккаунту не выполнено</b><p>Backend не получает пароль, cookies или токены. Проверка Galaxy касается только публичной страницы.</p></div></section>
 
-      <section class="panel auth-panel">\n        <div class="panel-title"><div><h2>Защищённое управление</h2><p>Вставь API-токен из Render. Он не отправляется в чат и не сохраняется в браузере.</p></div></div>\n        <label class="token-label" for="api-token">API TOKEN</label>\n        <input id="api-token" class="token-input" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Вставь секретный токен">\n        <div class="auth-actions"><button class="button button-primary" id="connect-api">Подключить API</button><button class="button button-secondary" id="disconnect-api">Отключить</button></div>\n        <p class="hint" id="api-auth-state">Защищённые функции пока не подключены.</p>\n      </section>\n\n      <div class="section-heading"><span>01 / BACKEND И БОТ</span><span class="muted">ЛОКАЛЬНЫЙ СЕРВЕР</span></div>
+      <section class="panel auth-panel">\n        <div class="panel-title"><div><h2>Защищённое управление</h2><p>Вставь API-токен из Render. Он не отправляется в чат и не сохраняется в браузере.</p></div></div>\n        <label class="token-label" for="api-token">API TOKEN</label>\n        <input id="api-token" class="token-input" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Вставь секретный токен">\n        <div class="auth-actions"><button class="button button-primary" id="connect-api">Подключить API</button><button class="button button-secondary" id="disconnect-api">Отключить</button></div>\n        <p class="hint" id="api-auth-state">Защищённые функции пока не подключены.</p>\n      </section>\n\n      <div class="section-heading"><span>01 / BACKEND И БОТ</span><span class="muted">ФОНОВЫЙ ПРОЦЕСС</span></div>
       <section class="panel">
         <div class="panel-title"><div><h2>Состояние системы</h2><p id="backend-detail">Ожидание ответа backend</p></div><span class="pill" id="backend-pill">НЕ ПРОВЕРЕН</span></div>
         <div class="stats">
           <div><small>BACKEND</small><b id="backend-value">—</b></div>
-          <div><small>БОТ</small><b id="bot-value">ОСТАНОВЛЕН</b></div>
+          <div><small>WORKER</small><b id="bot-value">ОСТАНОВЛЕН</b></div>
           <div><small>UPTIME</small><b id="uptime-value">—</b></div>
         </div>
         <div class="actions"><button class="button button-primary" id="start-bot">Запустить бота</button><button class="button button-secondary" id="stop-bot">Остановить</button></div>
-        <p class="hint">Кнопки управляют процессом бота-заготовки. Игровые сообщения и действия пока не выполняются.</p>
+        <p class="hint">Кнопки управляют только фоновым worker-процессом. Подключения к игровому аккаунту и игровых действий пока нет.</p>
       </section>
 
       <div class="section-heading"><span>02 / GALAXY</span><span class="muted">ПУБЛИЧНАЯ ПРОВЕРКА</span></div>
