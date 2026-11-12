@@ -3,10 +3,10 @@
   const logList = $("#log-list");
   const defaults = { messageMonitoring: false, autoReply: false, notifications: true };
   let settings = { ...defaults };
-  let backendOnline = false;
+  let backendOnline = false;\n  let apiToken = "";
 
   async function api(path, options = {}) {
-    const response = await fetch(path, { ...options, headers: { "content-type": "application/json", ...(options.headers || {}) } });
+    const response = await fetch(path, { ...options, headers: { "content-type": "application/json", ...(apiToken ? { authorization: "Bearer " + apiToken } : {}), ...(options.headers || {}) } });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.error || "HTTP " + response.status);
     return data;
@@ -87,7 +87,7 @@
       }
     });
   });
-  $("#start-bot").addEventListener("click", async () => {
+  $("#connect-api").addEventListener("click", async () => {\n    const candidate = $("#api-token").value.trim();\n    if (candidate.length < 32) { $("#api-auth-state").textContent = "Токен должен содержать не менее 32 символов."; return; }\n    apiToken = candidate;\n    $("#api-token").value = "";\n    try {\n      await refreshStatus();\n      await refreshLogs();\n      $("#api-auth-state").textContent = "Защищённый API подключён. Токен хранится только в памяти этой вкладки.";\n    } catch (error) {\n      apiToken = "";\n      $("#api-auth-state").textContent = "Проверка не пройдена: " + error.message + ". Токен очищен.";\n      await refreshAll();\n    }\n  });\n  $("#disconnect-api").addEventListener("click", async () => {\n    apiToken = "";\n    $("#api-auth-state").textContent = "Токен очищен из памяти вкладки.";\n    await refreshAll();\n  });\n  $("#start-bot").addEventListener("click", async () => {
     try { await api("/api/bot/start", { method: "POST" }); await refreshAll(); }
     catch (error) { $("#backend-detail").textContent = error.message; }
   });
