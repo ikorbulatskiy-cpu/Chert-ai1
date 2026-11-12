@@ -19,19 +19,19 @@ jobs:
 
       - name: Build for iOS Simulator
         run: |
-          xcodebuild -project iOS/ChertAI.xcodeproj \\
-            -scheme ChertAI \\
-            -configuration Debug \\
-            -destination 'generic/platform=iOS Simulator' \\
+          xcodebuild -project iOS/ChertAI.xcodeproj \
+            -scheme ChertAI \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
             CODE_SIGNING_ALLOWED=NO build
 
       - name: Archive unsigned iPhone app
         run: |
-          xcodebuild -project iOS/ChertAI.xcodeproj \\
-            -scheme ChertAI \\
-            -configuration Release \\
-            -destination 'generic/platform=iOS' \\
-            -archivePath "$RUNNER_TEMP/ChertAI.xcarchive" \\
+          xcodebuild -project iOS/ChertAI.xcodeproj \
+            -scheme ChertAI \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/ChertAI.xcarchive" \
             CODE_SIGNING_ALLOWED=NO archive
           mkdir -p "$RUNNER_TEMP/ipa/Payload"
           cp -R "$RUNNER_TEMP/ChertAI.xcarchive/Products/Applications/ChertAI.app" "$RUNNER_TEMP/ipa/Payload/"
@@ -42,5 +42,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ChertAI-unsigned-IPA
-          path: \${{ runner.temp }}/ChertAI-unsigned.ipa
+          path: ${{ runner.temp }}/ChertAI-unsigned.ipa
           if-no-files-found: error
