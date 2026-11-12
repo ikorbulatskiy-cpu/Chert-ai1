@@ -12,56 +12,50 @@
   <div class="shell">
     <header class="topbar">
       <a class="brand" href="#" aria-label="ЧЁРТ AI"><span class="brand-mark">Ч</span><span>ЧЁРТ <b>AI</b><small>GALAXY OF DATING</small></span></a>
-      <span class="system-state"><i></i> ЛОКАЛЬНЫЙ РЕЖИМ</span>
+      <span class="system-state" id="backend-state"><i></i> ПРОВЕРКА BACKEND</span>
     </header>
-
     <main>
       <section class="hero">
         <div class="eyebrow">ПАНЕЛЬ УПРАВЛЕНИЯ</div>
         <h1>Твой игровой<br><em>напарник.</em></h1>
-        <p>Управление подключением, персонажем и автоматизацией в одном месте.</p>
+        <p>Локальный backend, управление ботом и проверка доступности Galaxy.</p>
         <a class="primary-link" href="https://galaxy.mobstudio.ru/web/" target="_blank" rel="noopener noreferrer">Открыть официальный Galaxy <span>↗</span></a>
       </section>
+      <section class="notice" role="status"><span class="notice-icon">!</span><div><b>Подключение к игровому аккаунту не выполнено</b><p>Backend не получает пароль, cookies или токены. Проверка Galaxy касается только публичной страницы.</p></div></section>
 
-      <section class="notice" role="status">
-        <span class="notice-icon">!</span>
-        <div><b>Подключение к игре ещё не подтверждено</b><p>Вход выполняется только на официальном сайте. ЧЁРТ AI не запрашивает и не сохраняет пароль.</p></div>
-      </section>
-
-      <div class="section-heading"><span>01 / ПОДКЛЮЧЕНИЕ</span><span class="muted">БЕЗ ПЕРЕДАЧИ ПАРОЛЯ</span></div>
-      <section class="panel connection-panel">
-        <div class="panel-title"><div><h2>Galaxy of Dating</h2><p>Официальная игровая сессия</p></div><span class="pill" id="connection-pill">НЕ ПОДКЛЮЧЕНО</span></div>
-        <ol class="steps">
-          <li><span>1</span>Открой официальный сайт и войди там.</li>
-          <li><span>2</span>Вернись сюда после входа.</li>
-          <li><span>3</span>Дождись поддержки безопасного способа интеграции.</li>
-        </ol>
-        <button class="button button-primary" id="open-site">Открыть сайт для входа ↗</button>
-        <p class="hint">Статус сессии нельзя проверить с этой страницы: браузер изолирует данные разных сайтов.</p>
-      </section>
-
-      <div class="section-heading"><span>02 / ПЕРСОНАЖ</span><span class="muted">ДАННЫЕ ИГРЫ</span></div>
+      <div class="section-heading"><span>01 / BACKEND И БОТ</span><span class="muted">ЛОКАЛЬНЫЙ СЕРВЕР</span></div>
       <section class="panel">
-        <div class="empty-state"><div class="avatar">?</div><div><b id="character-name">Персонаж не загружен</b><p id="character-description">Сначала потребуется безопасный доступ к данным игры.</p></div></div>
+        <div class="panel-title"><div><h2>Состояние системы</h2><p id="backend-detail">Ожидание ответа backend</p></div><span class="pill" id="backend-pill">НЕ ПРОВЕРЕН</span></div>
         <div class="stats">
-          <div><small>УРОВЕНЬ</small><b id="level">—</b></div>
-          <div><small>ПЛАНЕТА</small><b id="planet">—</b></div>
-          <div><small>СТАТУС</small><b id="character-status">ОЖИДАНИЕ</b></div>
+          <div><small>BACKEND</small><b id="backend-value">—</b></div>
+          <div><small>БОТ</small><b id="bot-value">ОСТАНОВЛЕН</b></div>
+          <div><small>UPTIME</small><b id="uptime-value">—</b></div>
         </div>
+        <div class="actions"><button class="button button-primary" id="start-bot">Запустить бота</button><button class="button button-secondary" id="stop-bot">Остановить</button></div>
+        <p class="hint">Кнопки управляют процессом бота-заготовки. Игровые сообщения и действия пока не выполняются.</p>
       </section>
 
-      <div class="section-heading"><span>03 / УПРАВЛЕНИЕ БОТОМ</span><span class="muted">ЛОКАЛЬНЫЕ НАСТРОЙКИ</span></div>
+      <div class="section-heading"><span>02 / GALAXY</span><span class="muted">ПУБЛИЧНАЯ ПРОВЕРКА</span></div>
+      <section class="panel connection-panel">
+        <div class="panel-title"><div><h2>Galaxy of Dating</h2><p id="galaxy-detail">Страница ещё не проверялась</p></div><span class="pill" id="galaxy-pill">НЕ ПРОВЕРЕНО</span></div>
+        <button class="button button-primary" id="check-galaxy">Проверить доступность сайта</button>
+        <p class="hint">Проверка не входит в аккаунт и не читает профиль или сообщения. Данные персонажа: <b>недоступны</b>. Сообщения: <b>недоступны</b>.</p>
+      </section>
+
+      <div class="section-heading"><span>03 / ПЕРСОНАЖ</span><span class="muted">ДАННЫЕ ИГРЫ</span></div>
+      <section class="panel"><div class="empty-state"><div class="avatar">?</div><div><b>Персонаж не загружен</b><p>Нет разрешённого интерфейса чтения данных аккаунта.</p></div></div><div class="stats"><div><small>УРОВЕНЬ</small><b>—</b></div><div><small>ПЛАНЕТА</small><b>—</b></div><div><small>СТАТУС</small><b>НЕДОСТУПЕН</b></div></div></section>
+
+      <div class="section-heading"><span>04 / УПРАВЛЕНИЕ</span><span class="muted">НАСТРОЙКИ BACKEND</span></div>
       <section class="panel controls">
-        <div class="control-row"><div><b>Получение сообщений</b><p>Подготовка к чтению входящих</p></div><label class="switch"><input type="checkbox" data-setting="messageMonitoring"><span></span></label></div>
-        <div class="control-row"><div><b>Автоответы</b><p>Ответы только после подключения и настройки</p></div><label class="switch"><input type="checkbox" data-setting="autoReply"><span></span></label></div>
+        <div class="control-row"><div><b>Получение сообщений</b><p>Сохранение настройки, без чтения игры</p></div><label class="switch"><input type="checkbox" data-setting="messageMonitoring"><span></span></label></div>
+        <div class="control-row"><div><b>Автоответы</b><p>Настройка сохранится, отправка отключена</p></div><label class="switch"><input type="checkbox" data-setting="autoReply"><span></span></label></div>
         <div class="control-row"><div><b>Уведомления</b><p>Запись событий в журнал</p></div><label class="switch"><input type="checkbox" data-setting="notifications" checked><span></span></label></div>
-        <p class="hint">Переключатели пока сохраняют настройки в этом браузере. Они не выполняют игровые действия без официального интерфейса интеграции.</p>
+        <p class="hint" id="settings-state">Загрузка настроек…</p>
       </section>
 
-      <div class="section-heading"><span>04 / ЖУРНАЛ</span><button class="text-button" id="clear-log">ОЧИСТИТЬ</button></div>
-      <section class="panel log-panel"><div id="log-list" aria-live="polite"></div></section>
-
-      <footer><span>ЧЁРТ AI</span><span>Безопасность прежде автоматизации.</span></footer>
+      <div class="section-heading"><span>05 / ЖУРНАЛ ДЕЙСТВИЙ</span><button class="text-button" id="refresh-log">ОБНОВИТЬ</button></div>
+      <section class="panel log-panel"><div id="log-list" aria-live="polite"><p class="log-empty">Загрузка журнала…</p></div></section>
+      <footer><span>ЧЁРТ AI</span><span>Локальный backend · без паролей</span></footer>
     </main>
   </div>
 </body>
