@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import SafariServices
 
 struct ContentView: View {
