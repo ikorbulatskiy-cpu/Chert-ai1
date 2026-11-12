@@ -80,6 +80,15 @@ async function main() {
     assert.equal(response.status, 201, "authenticated manual Galaxy import should succeed");
     payload = await response.json();
     assert.equal(payload.imported.characters, "Тестовое сообщение из Galaxy".length);
+    response = await request("/api/galaxy/process", { method: "POST", headers: auth, body: JSON.stringify({}) });
+    assert.equal(response.status, 201, "new manual import should be processed");
+    payload = await response.json();
+    assert.equal(payload.processed.messageCount, 1, "plain pasted text should become one parsed message");
+    assert.ok(payload.processed.replyDraft, "processor should prepare a non-sending reply draft");
+    response = await request("/api/galaxy/processed?limit=5", { headers: auth });
+    assert.equal(response.status, 200, "processed conversations should be readable");
+    payload = await response.json();
+    assert.ok(payload.entries.some(entry => entry.messageCount === 1));
     response = await request("/api/galaxy/imports?limit=5", { headers: auth });
     assert.equal(response.status, 200, "manual imports should be readable");
     payload = await response.json();
