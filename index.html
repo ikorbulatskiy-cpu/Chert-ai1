@@ -57,6 +57,9 @@
           <li><span>2</span>Скопируй нужный текст сообщений или профиля.</li>
           <li><span>3</span>Вернись сюда, вставь текст в поле и нажми «Импортировать».</li>
         </ol>
+        <label class="token-label" for="character-name">ИМЯ ТВОЕГО ПЕРСОНАЖА (ДЛЯ ИСТОРИИ)</label>
+        <input id="character-name" class="token-input" maxlength="60" placeholder="Например: Алексей или мой персонаж">
+        <p class="hint">История разделяется по этому имени. Если оставить пустым, записи попадут в группу «Без имени».</p>
         <label class="token-label" for="galaxy-text">ТЕКСТ ИЗ GALAXY</label>
         <textarea id="galaxy-text" class="token-input paste-input" maxlength="8000" placeholder="Вставь сюда скопированный текст…" spellcheck="false"></textarea>
         <div class="paste-footer"><span id="galaxy-char-count">0 / 8000</span><button class="button button-primary" id="import-galaxy-text">Импортировать текст</button></div>
@@ -86,14 +89,16 @@
         <p class="hint" id="processing-state">Разбор поддерживает распространённые варианты «Имя: сообщение» и «время Имя: сообщение». Можно выбрать один из нескольких черновиков и скопировать его. Отправка выполняется вручную.</p>
         <div id="processed-list"><p class="log-empty">Пока нет обработанных сообщений.</p></div>
       </section>
+      <div class="section-heading"><span>05 / ИСТОРИЯ ПО ПЕРСОНАЖАМ</span><button class="text-button" id="refresh-conversations">ОБНОВИТЬ</button></div>
+      <section class="panel log-panel"><div id="conversation-list"><p class="log-empty">Подключи API, чтобы загрузить историю.</p></div></section>
 
-      <div class="section-heading"><span>05 / GALAXY</span><span class="muted">ПУБЛИЧНАЯ ПРОВЕРКА</span></div>
+      <div class="section-heading"><span>06 / GALAXY</span><span class="muted">ПУБЛИЧНАЯ ПРОВЕРКА</span></div>
       <section class="panel connection-panel">
         <div class="panel-title"><div><h2>Доступность сайта</h2><p id="galaxy-detail">Страница ещё не проверялась</p></div><span class="pill" id="galaxy-pill">НЕ ПРОВЕРЕНО</span></div>
         <button class="button button-primary" id="check-galaxy">Проверить доступность сайта</button>
       </section>
 
-      <div class="section-heading"><span>06 / НАСТРОЙКИ</span><span class="muted">BACKEND</span></div>
+      <div class="section-heading"><span>07 / НАСТРОЙКИ</span><span class="muted">BACKEND</span></div>
       <section class="panel controls">
         <div class="control-row"><div><b>Получение сообщений</b><p>Ручной импорт. Автоматический мониторинг Galaxy пока недоступен.</p></div><label class="switch"><input type="checkbox" data-setting="messageMonitoring" disabled><span></span></label></div>
         <div class="control-row"><div><b>Автоответы</b><p>Пока только черновики. Отправка выполняется вручную в Galaxy.</p></div><label class="switch"><input type="checkbox" data-setting="autoReply" disabled><span></span></label></div>
@@ -101,7 +106,7 @@
         <p class="hint" id="settings-state">Загрузка настроек…</p>
       </section>
 
-      <div class="section-heading"><span>07 / ЖУРНАЛ ДЕЙСТВИЙ</span><button class="text-button" id="refresh-log">ОБНОВИТЬ</button></div>
+      <div class="section-heading"><span>08 / ЖУРНАЛ ДЕЙСТВИЙ</span><button class="text-button" id="refresh-log">ОБНОВИТЬ</button></div>
       <section class="panel log-panel"><div id="log-list" aria-live="polite"><p class="log-empty">Загрузка журнала…</p></div></section>
       <footer><span>ЧЁРТ AI</span><span>Пользовательский мост · без паролей</span></footer>
     </main>
