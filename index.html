@@ -72,6 +72,13 @@
           <p class="hint" id="bookmarklet-state">Токен будет запрошен при запуске закладки и не сохранится в ней.</p>
         </div>
         <div class="bridge-bookmarklet">
+          <label class="token-label" for="diagnostic-bookmarklet-code">ДИАГНОСТИКА СТРУКТУРЫ ЧАТА</label>
+          <p class="hint">Запусти закладку на открытом экране Galaxy. Она передаст видимые текстовые элементы и структуру полей. Значения полей, пароли, cookies и токены не считываются. Это нужно, чтобы подобрать точные селекторы чата, а не угадывать их.</p>
+          <textarea id="diagnostic-bookmarklet-code" class="token-input paste-input" readonly spellcheck="false"></textarea>
+          <button class="button button-secondary" id="copy-diagnostic-bookmarklet" type="button">Скопировать диагностическую закладку</button>
+          <p class="hint" id="diagnostic-bookmarklet-state">Сначала открой конкретный игровой диалог в Galaxy.</p>
+        </div>
+        <div class="bridge-bookmarklet">
           <label class="token-label" for="reply-bookmarklet-code">ЗАПОЛНЕНИЕ ПОЛЯ ОТВЕТА</label>
           <p class="hint">После генерации черновика скопируй ответ в Chert AI. В Galaxy открой нужный диалог, запусти эту закладку и вставь ответ в появившееся окно. Закладка заполнит поле сообщения, но не нажмёт «Отправить».</p>
           <textarea id="reply-bookmarklet-code" class="token-input paste-input" readonly spellcheck="false"></textarea>
