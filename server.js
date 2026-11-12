@@ -299,8 +299,8 @@ const server = http.createServer(async (req, res) => {
         page: typeof input.url === "string" ? input.url.slice(0, 300) : "",
         title: typeof input.title === "string" ? input.title.slice(0, 200) : "",
         viewport: input.viewport && typeof input.viewport === "object" ? { width: Number(input.viewport.width) || 0, height: Number(input.viewport.height) || 0 } : {},
-        leafNodes: Array.isArray(input.leafNodes) ? input.leafNodes.slice(0, 100).map(x => ({ tag: String(x.tag||"").slice(0,20), role: String(x.role||"").slice(0,40), cls: String(x.cls||"").slice(0,160), text: String(x.text||"").slice(0,180) })) : [],
-        chatContainers: Array.isArray(input.chatContainers) ? input.chatContainers.slice(0, 50).map(x => ({ tag: String(x.tag||"").slice(0,20), role: String(x.role||"").slice(0,40), cls: String(x.cls||"").slice(0,180), dataMessage: Boolean(x.dataMessage), text: String(x.text||"").slice(0,300) })) : [],
+        leafNodes: Array.isArray(input.leafNodes) ? input.leafNodes.slice(0, 30).map(x => ({ tag: String(x.tag||"").slice(0,20), role: String(x.role||"").slice(0,40), cls: String(x.cls||"").slice(0,160), text: String(x.text||"").slice(0,180) })) : [],
+        chatContainers: Array.isArray(input.chatContainers) ? input.chatContainers.slice(0, 12).map(x => ({ tag: String(x.tag||"").slice(0,20), role: String(x.role||"").slice(0,40), cls: String(x.cls||"").slice(0,180), dataMessage: Boolean(x.dataMessage), text: String(x.text||"").slice(0,300) })) : [],
         inputs: Array.isArray(input.inputs) ? input.inputs.slice(0, 30).map(x => ({ tag: String(x.tag||"").slice(0,20), type: String(x.type||"").slice(0,30), role: String(x.role||"").slice(0,40), cls: String(x.cls||"").slice(0,160), placeholder: String(x.placeholder||"").slice(0,120), aria: String(x.aria||"").slice(0,120) })) : []
       };
       fs.appendFileSync(DIAGNOSTICS_FILE, JSON.stringify(safe) + "\n", { mode: 0o600 });
