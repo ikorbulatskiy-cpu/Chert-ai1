@@ -63,15 +63,26 @@
   }
   async function refreshAll() {
     try {
+      if (!apiToken) {
+        const health = await fetch("/api/health", { cache: "no-store" });
+        if (!health.ok) throw new Error("HTTP " + health.status);
+        backendOnline = true;
+        $("#backend-state").textContent = "BACKEND ONLINE";
+        $("#backend-detail").textContent = "Сервер отвечает. Подключи API-токен для защищённых функций.";
+        $("#backend-value").textContent = "ONLINE";
+        setPill("#backend-pill", "СЕРВЕР ДОСТУПЕН", "ok");
+        $("#settings-state").textContent = "Введи API-токен, чтобы загрузить настройки и журнал.";
+        return;
+      }
       await refreshStatus();
       await refreshLogs();
     } catch (error) {
       backendOnline = false;
       $("#backend-state").textContent = "BACKEND OFFLINE";
-      $("#backend-detail").textContent = error.message + ". Запусти сервер командой npm start.";
+      $("#backend-detail").textContent = error.message + ". Сервер недоступен.";
       $("#backend-value").textContent = "OFFLINE";
       setPill("#backend-pill", "НЕТ СВЯЗИ", "warn");
-      $("#settings-state").textContent = "Настройки backend недоступны. Открой приложение через локальный сервер.";
+      $("#settings-state").textContent = "Настройки backend недоступны.";
     }
   }
   document.querySelectorAll("[data-setting]").forEach(input => {
@@ -126,5 +137,9 @@
   });
   $("#refresh-log").addEventListener("click", () => refreshLogs().catch(error => renderLogs([{ at: new Date().toISOString(), event: "Ошибка загрузки журнала", details: { message: error.message } }])));
   refreshAll();
-  setInterval(() => { if (backendOnline) refreshStatus().catch(() => { backendOnline = false; }); }, 5000);
+  setInterval(() => {
+    if (!backendOnline) return;
+    if (apiToken) refreshStatus().catch(() => { backendOnline = false; });
+    else refreshAll();
+  }, 15000);
 })();
