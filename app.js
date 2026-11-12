@@ -124,7 +124,7 @@
     const data = await api("/api/status");
     backendOnline = true;
     $("#backend-state").textContent = "BACKEND ONLINE";
-    $("#backend-detail").textContent = "Сервер отвечает · " + new Date(data.time).toLocaleTimeString("ru-RU");
+    $("#backend-detail").textContent = "Сервер отвечает · " + new Date(data.time).toLocaleTimeString("ru-RU") + " · ИИ: " + (data.ai && data.ai.configured ? data.ai.model : "не настроен");
     $("#backend-value").textContent = "ONLINE";
     setPill("#backend-pill", "РАБОТАЕТ", "ok");
     $("#bot-value").textContent = data.bot.running ? "ЗАПУЩЕН" : "ОСТАНОВЛЕН";
@@ -260,7 +260,7 @@
     button.textContent = "Обработка…";
     try {
       const result = await api("/api/galaxy/process", { method: "POST", body: JSON.stringify({}) });
-      $("#processing-state").textContent = "Распознано сообщений: " + result.processed.messageCount + ". Черновик ответа подготовлен, но не отправлен.";
+      $("#processing-state").textContent = "Распознано сообщений: " + result.processed.messageCount + ". " + (result.processed.ai && result.processed.ai.used ? "Ответ сгенерирован ИИ (" + result.processed.ai.model + ")." : "ИИ не настроен, использован резервный шаблон.") + " Черновик не отправлен.";
       await refreshProcessed();
     } catch (error) {
       $("#processing-state").textContent = error.message;
