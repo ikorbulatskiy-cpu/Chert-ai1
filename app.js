@@ -57,6 +57,7 @@
     const data = await api("/api/galaxy/imports?limit=20");
     renderEntries(importList, data.entries || [], "Импортированных выделений пока нет.", true);
   }
+  async function refreshConversations(){const data=await api("/api/galaxy/conversations"),target=$("#conversation-list");target.replaceChildren();if(!(data.entries||[]).length){const e=document.createElement("p");e.className="log-empty";e.textContent="История появится после импорта сообщений с указанным персонажем.";target.append(e);return;}data.entries.forEach(c=>{const card=document.createElement("article");card.className="processed-card";const title=document.createElement("b");title.textContent=c.characterName||c.key||"Без имени";card.append(title);const meta=document.createElement("p");meta.textContent="Обновлено: "+new Date(c.updatedAt).toLocaleString("ru-RU")+" · сообщений: "+(c.messages||[]).length;card.append(meta);(c.messages||[]).slice(-12).forEach(m=>{const row=document.createElement("div");row.className="parsed-message";const who=document.createElement("strong");who.textContent=m.sender||"Не определён";const body=document.createElement("div");body.textContent=m.text;row.append(who,body);card.append(row);});target.append(card);});}
   async function refreshProcessed() {
     const data = await api("/api/galaxy/processed?limit=30");
     processedList.replaceChildren();
@@ -74,7 +75,8 @@
       title.textContent = item.pageTitle || "Диалог Galaxy";
       card.append(title);
       const meta = document.createElement("p");
-      meta.textContent = new Date(item.at).toLocaleString("ru-RU") + " · распознано сообщений: " + item.messageCount;
+      const source=item.ai&&item.ai.source==="openai"?"OpenAI":item.ai&&item.ai.source==="template"?"Шаблон":"Нет ответа";
+      meta.textContent = new Date(item.at).toLocaleString("ru-RU") + " · распознано сообщений: " + item.messageCount + " · источник ответа: " + source;
       card.append(meta);
       (item.messages || []).forEach(message => {
         const row = document.createElement("div");
@@ -90,7 +92,7 @@
         const draft = document.createElement("div");
         draft.className = "reply-draft";
         const label = document.createElement("strong");
-        label.textContent = "Черновик ответа · не отправлен";
+        label.textContent = "Черновик ответа · источник: " + (item.replyDraft.sourceLabel || "Шаблон") + " · не отправлен";
         const content = document.createElement("p");
         content.textContent = item.replyDraft.text;
         draft.append(label, content);
@@ -152,7 +154,7 @@
         return;
       }
       await refreshStatus();
-      await Promise.all([refreshLogs(), refreshImports(), refreshProcessed()]);
+      await Promise.all([refreshLogs(), refreshImports(), refreshProcessed(), refreshConversations()]);
     } catch (error) {
       backendOnline = false;
       $("#backend-state").textContent = "BACKEND OFFLINE";
@@ -209,6 +211,7 @@
         method: "POST",
         body: JSON.stringify({
           text,
+          characterName: $("#character-name").value.trim(),
           pageTitle: "Ручной импорт из Galaxy",
           pageUrl: "https://galaxy.mobstudio.ru/web/"
         })
@@ -218,7 +221,7 @@
       $("#galaxy-char-count").textContent = "0 / 8000";
       const processed = await api("/api/galaxy/process", { method: "POST", body: JSON.stringify({}) });
       $("#bridge-state").textContent += " Обработано сообщений: " + processed.processed.messageCount + ".";
-      await Promise.all([refreshImports(), refreshLogs(), refreshProcessed()]);
+      await Promise.all([refreshImports(), refreshLogs(), refreshProcessed(), refreshConversations()]);
     } catch (error) {
       $("#bridge-state").textContent = "Импорт не выполнен: " + error.message;
     } finally {
@@ -279,6 +282,7 @@
   });
   $("#refresh-log").addEventListener("click", () => refreshLogs().catch(error => renderEntries(logList, [{ at: new Date().toISOString(), event: "Ошибка загрузки журнала", details: { message: error.message } }], "", false)));
   $("#refresh-imports").addEventListener("click", () => refreshImports().catch(error => renderEntries(importList, [{ at: new Date().toISOString(), pageTitle: "Ошибка загрузки: " + error.message }], "", false)));
+  $("#refresh-conversations").addEventListener("click", () => refreshConversations().catch(error => { $("#conversation-list").textContent = "Ошибка загрузки истории: " + error.message; }));
   $("#process-imports").addEventListener("click", async () => {
     const button = $("#process-imports");
     button.disabled = true;
@@ -286,7 +290,7 @@
     try {
       const result = await api("/api/galaxy/process", { method: "POST", body: JSON.stringify({}) });
       $("#processing-state").textContent = "Распознано сообщений: " + result.processed.messageCount + ". " + (result.processed.ai && result.processed.ai.used ? "Ответ сгенерирован ИИ (" + result.processed.ai.model + ")." : "ИИ не настроен, использован резервный шаблон.") + " Черновик не отправлен.";
-      await refreshProcessed();
+      await Promise.all([refreshProcessed(),refreshConversations()]);
     } catch (error) {
       $("#processing-state").textContent = error.message;
     } finally {
