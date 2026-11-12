@@ -15,6 +15,8 @@ const PROCESSED_FILE = path.join(DATA_DIR, "galaxy-processed.jsonl");
 const HOST = process.env.CHERT_HOST || "0.0.0.0";
 const PORT = Number(process.env.PORT || process.env.CHERT_PORT || 8787);
 const TOKEN = process.env.CHERT_API_TOKEN || "";
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
+const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-6-luna";
 const DEFAULTS = { messageMonitoring: false, autoReply: false, notifications: true };
 const GALAXY_ORIGIN = "https://galaxy.mobstudio.ru";
 
@@ -108,7 +110,8 @@ function statusPayload() {
     bot: { ...bot, uptimeSeconds: bot.startedAt ? Math.floor((Date.now() - Date.parse(bot.startedAt)) / 1000) : 0 },
     settings,
     galaxy,
-    integration: { mode: "user_selected_text_bridge", authenticated: false, profile: "manual_import_only", messages: "manual_import_only", note: "Импортируется только текст, который пользователь сам выделил на открытой странице Galaxy. Автоматическое чтение и отправка сообщений не выполняются." },
+    integration: { mode: "manual_visible_text", authenticated: false, profile: "manual_import_only", messages: "manual_import_only", note: "Нет подтверждённого интерфейса Galaxy для чтения и отправки. Доступен только пользовательский импорт текста." },
+    ai: { configured: Boolean(OPENAI_API_KEY), model: OPENAI_MODEL },
     time: new Date().toISOString()
   };
 }
@@ -170,6 +173,25 @@ function suggestReplies(message) {
   if (/пока|спокойной ночи|до встречи/.test(text)) return ["До встречи! Хорошего тебе дня 🙂", "Пока! Буду рад продолжить общение."];
   if (/\?$/.test(text)) return ["Интересный вопрос. Расскажи немного подробнее 🙂", "Хочу понять тебя точнее. Что ты имеешь в виду?"];
   return ["Понял тебя 🙂 Расскажи об этом чуть подробнее.", "Интересно. И что было дальше?", "Понимаю 🙂 А как ты сам к этому относишься?"];
+}
+async function generateAiReply(messages) {
+  if (!OPENAI_API_KEY) return null;
+  const transcript = messages.slice(-30).map(m => `${m.sender}: ${m.text}`).join("\\n");
+  const response = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: { "authorization": "Bearer " + OPENAI_API_KEY, "content-type": "application/json" },
+    body: JSON.stringify({
+      model: OPENAI_MODEL,
+      instructions: "Ты помощник пользователя в дружеской переписке. Пиши естественно по-русски, коротко, без выдумывания биографических фактов и без давления. Учитывай контекст диалога. Верни только текст одного подходящего ответа.",
+      input: transcript,
+      max_output_tokens: 180
+    }),
+    signal: AbortSignal.timeout(30000)
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw Object.assign(new Error("AI provider returned HTTP " + response.status), { status: 502 });
+  const output = (data.output || []).flatMap(item => item.content || []).filter(item => item.type === "output_text").map(item => item.text).join("\\n").trim();
+  return output || null;
 }
 function processImport(entry) {
   const messages = parseGalaxyText(entry.text);
@@ -287,7 +309,7 @@ const server = http.createServer(async (req, res) => {
         text: content
       };
       fs.appendFileSync(IMPORT_FILE, JSON.stringify(entry) + "\n", { mode: 0o600 });
-      audit("galaxy.user_text_imported", { characters: cleaned.length, removedCharacters: content.length - cleaned.length, pageUrl });
+      audit("galaxy.user_text_imported", { characters: content.length, removedCharacters: rawContent.length - content.length, pageUrl });
       return send(res, 201, { ok: true, imported: { id: entry.id, characters: content.length, at: entry.at } }, cors);
     }
     if (url.pathname === "/api/galaxy/process" && req.method === "POST") {
