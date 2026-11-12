@@ -13,6 +13,7 @@ const LOG_FILE = path.join(DATA_DIR, "audit.jsonl");
 const IMPORT_FILE = path.join(DATA_DIR, "galaxy-imports.jsonl");
 const PROCESSED_FILE = path.join(DATA_DIR, "galaxy-processed.jsonl");
 const CONVERSATIONS_FILE = path.join(DATA_DIR, "galaxy-conversations.json");
+const DIAGNOSTICS_FILE = path.join(DATA_DIR, "galaxy-diagnostics.jsonl");
 const HOST = process.env.CHERT_HOST || "0.0.0.0";
 const PORT = Number(process.env.PORT || process.env.CHERT_PORT || 8787);
 const TOKEN = process.env.CHERT_API_TOKEN || "";
@@ -233,9 +234,10 @@ const server = http.createServer(async (req, res) => {
   if (!rateAllowed(ip)) return send(res, 429, { error: "Слишком много запросов" });
   const url = new URL(req.url, "http://localhost");
   const isGalaxyImport = url.pathname === "/api/galaxy/import";
-  const cors = isGalaxyImport ? corsHeaders(req) : {};
+  const isGalaxyDiagnostic = url.pathname === "/api/galaxy/diagnostics";
+  const cors = isGalaxyImport || isGalaxyDiagnostic ? corsHeaders(req) : {};
 
-  if (isGalaxyImport && req.method === "OPTIONS") {
+  if ((isGalaxyImport || isGalaxyDiagnostic) && req.method === "OPTIONS") {
     if (!req.headers.origin || req.headers.origin !== GALAXY_ORIGIN) return send(res, 403, { error: "Origin not allowed" });
     res.writeHead(204, cors);
     return res.end();
@@ -290,6 +292,21 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: true, bot });
     }
     if (url.pathname === "/api/galaxy/check" && req.method === "POST") return send(res, 200, { ok: true, galaxy: await checkGalaxy() });
+    if (isGalaxyDiagnostic && req.method === "POST") {
+      const input = await bodyJson(req);
+      const safe = {
+        at: new Date().toISOString(),
+        page: typeof input.url === "string" ? input.url.slice(0, 300) : "",
+        title: typeof input.title === "string" ? input.title.slice(0, 200) : "",
+        viewport: input.viewport && typeof input.viewport === "object" ? { width: Number(input.viewport.width) || 0, height: Number(input.viewport.height) || 0 } : {},
+        leafNodes: Array.isArray(input.leafNodes) ? input.leafNodes.slice(0, 100).map(x => ({ tag: String(x.tag||"").slice(0,20), role: String(x.role||"").slice(0,40), cls: String(x.cls||"").slice(0,160), text: String(x.text||"").slice(0,180) })) : [],
+        chatContainers: Array.isArray(input.chatContainers) ? input.chatContainers.slice(0, 50).map(x => ({ tag: String(x.tag||"").slice(0,20), role: String(x.role||"").slice(0,40), cls: String(x.cls||"").slice(0,180), dataMessage: Boolean(x.dataMessage), text: String(x.text||"").slice(0,300) })) : [],
+        inputs: Array.isArray(input.inputs) ? input.inputs.slice(0, 30).map(x => ({ tag: String(x.tag||"").slice(0,20), type: String(x.type||"").slice(0,30), role: String(x.role||"").slice(0,40), cls: String(x.cls||"").slice(0,160), placeholder: String(x.placeholder||"").slice(0,120), aria: String(x.aria||"").slice(0,120) })) : []
+      };
+      fs.appendFileSync(DIAGNOSTICS_FILE, JSON.stringify(safe) + "\n", { mode: 0o600 });
+      audit("galaxy.dom_diagnostic_received", { leafNodes: safe.leafNodes.length, chatContainers: safe.chatContainers.length, inputs: safe.inputs.length });
+      return send(res, 201, { ok: true, count: safe.leafNodes.length + safe.chatContainers.length + safe.inputs.length }, cors);
+    }
     if (isGalaxyImport && req.method === "POST") {
       const input = await bodyJson(req);
       const rawContent = typeof input.text === "string" ? input.text.trim() : "";
@@ -335,6 +352,7 @@ const server = http.createServer(async (req, res) => {
       audit("galaxy.import_processed", { importId: entry.id, messages: result.messageCount, hasReplyDraft: Boolean(result.replyDraft), replySource: source, conversationKey: result.conversationKey });
       return send(res, 201, { ok: true, processed: result });
     }
+    if (url.pathname === "/api/galaxy/diagnostics" && req.method === "GET") return send(res, 200, { entries: readJsonLines(DIAGNOSTICS_FILE, 5) });
     if (url.pathname === "/api/galaxy/conversations" && req.method === "GET") {
       const entries=Object.values(loadConversations()).sort((a,b)=>String(b.updatedAt).localeCompare(String(a.updatedAt)));
       return send(res,200,{entries});
