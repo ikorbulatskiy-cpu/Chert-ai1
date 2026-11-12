@@ -11,6 +11,7 @@
     A00000000000000000000005 = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ChertAI.app; sourceTree = BUILT_PRODUCTS_DIR;};
     A00000000000000000000006 = {isa = PBXNativeTarget; buildConfigurationList = A0000000000000000000000E; buildPhases = (A0000000000000000000000F, A00000000000000000000010, A00000000000000000000011); buildRules = (); dependencies = (); name = ChertAI; productName = ChertAI; productReference = A00000000000000000000005; productType = "com.apple.product-type.application";};
     A00000000000000000000008 = {isa = PBXNativeTarget; buildConfigurationList = A0000000000000000000000E; buildPhases = (A0000000000000000000000F, A00000000000000000000010, A00000000000000000000011); buildRules = (); dependencies = (); name = ChertAI; productName = ChertAI; productReference = A00000000000000000000005; productType = "com.apple.product-type.application";};
+    A0000000000000000000000E = {isa = XCConfigurationList; buildConfigurations = (A00000000000000000000012, A00000000000000000000013); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release;};
     A00000000000000000000009 = {isa = XCConfigurationList; buildConfigurations = (A00000000000000000000012, A00000000000000000000013); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release;};
     A0000000000000000000000A = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChertAIApp.swift; sourceTree = "<group>";};
     A0000000000000000000000B = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>";};
@@ -22,7 +23,7 @@
     A00000000000000000000014 = {isa = PBXBuildFile; fileRef = A0000000000000000000000A;};
     A00000000000000000000015 = {isa = PBXBuildFile; fileRef = A0000000000000000000000B;};
     A00000000000000000000016 = {isa = PBXBuildFile; fileRef = A0000000000000000000000C;};
-    A00000000000000000000012 = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = ChertAI/Info.plist; IPHONEOS_DEPLOYMENT_TARGET = 16.0; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = ru.chertai.ios; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = iphoneos; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2";}; name = Debug;};
+    A00000000000000000000012 = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = ChertAI/Info.plist; IPHONEOS_DEPLOYMENT_TARGET = 16.0; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = ru.chertai.ios; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = iphoneos; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2";}; name = Debug;};
     A00000000000000000000013 = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = ChertAI/Info.plist; IPHONEOS_DEPLOYMENT_TARGET = 16.0; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = ru.chertai.ios; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = iphoneos; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2";}; name = Release;};
   };
   rootObject = A00000000000000000000001;
