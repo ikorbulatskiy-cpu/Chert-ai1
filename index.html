@@ -55,6 +55,14 @@
         <textarea id="galaxy-text" class="token-input paste-input" maxlength="8000" placeholder="Вставь сюда скопированный текст…" spellcheck="false"></textarea>
         <div class="paste-footer"><span id="galaxy-char-count">0 / 8000</span><button class="button button-primary" id="import-galaxy-text">Импортировать текст</button></div>
         <p class="hint" id="bridge-state">Отправляется только текст, который ты сам вставил. Пароли, cookies и данные сессии не читаются. Автоматическое чтение и отправка игровых сообщений не реализованы.</p>
+        <div class="bridge-bookmarklet">
+          <label class="token-label" for="bookmarklet-code">ЗАКЛАДКА ДЛЯ SAFARI</label>
+          <p class="hint">Создай закладку в Safari и замени её адрес этим кодом. На странице Galaxy выдели нужные сообщения и запусти закладку. Она отправит только выделенный текст.</p>
+          <textarea id="bookmarklet-code" class="token-input paste-input" readonly spellcheck="false"></textarea>
+          <button class="button button-secondary" id="copy-bookmarklet" type="button">Скопировать код закладки</button>
+          <p class="hint" id="bookmarklet-state">Токен будет запрошен при запуске закладки и не сохранится в ней.</p>
+        </div>
+
       </section>
 
       <div class="section-heading"><span>03 / ИМПОРТИРОВАННЫЕ ДАННЫЕ</span><button class="text-button" id="refresh-imports">ОБНОВИТЬ</button></div>
