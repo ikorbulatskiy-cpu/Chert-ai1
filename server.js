@@ -1,0 +1,169 @@
+"use strict";
+
+const http = require("node:http");
+const fs = require("node:fs");
+const path = require("node:path");
+const crypto = require("node:crypto");
+
+const ROOT = __dirname;
+const DATA_DIR = path.join(ROOT, "data");
+const SETTINGS_FILE = path.join(DATA_DIR, "settings.json");
+const LOG_FILE = path.join(DATA_DIR, "audit.jsonl");
+const HOST = process.env.CHERT_HOST || "127.0.0.1";
+const PORT = Number(process.env.PORT || process.env.CHERT_PORT || 8787);
+const TOKEN = process.env.CHERT_API_TOKEN || "";
+const DEFAULTS = { messageMonitoring: false, autoReply: false, notifications: true };
+const MIME = { ".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".json": "application/json; charset=utf-8" };
+
+fs.mkdirSync(DATA_DIR, { recursive: true });
+let settings = loadSettings();
+let bot = { running: false, startedAt: null, heartbeatAt: null };
+let galaxy = { state: "not_checked", checkedAt: null, httpStatus: null, detail: "Внешний сайт ещё не проверялся." };
+const hits = new Map();
+
+function loadSettings() {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(SETTINGS_FILE, "utf8"));
+    return { ...DEFAULTS, ...parsed };
+  } catch {
+    return { ...DEFAULTS };
+  }
+}
+function persistSettings() {
+  const temp = SETTINGS_FILE + ".tmp";
+  fs.writeFileSync(temp, JSON.stringify(settings, null, 2), { mode: 0o600 });
+  fs.renameSync(temp, SETTINGS_FILE);
+}
+function audit(event, details = {}) {
+  const row = { id: crypto.randomUUID(), at: new Date().toISOString(), event, details };
+  fs.appendFileSync(LOG_FILE, JSON.stringify(row) + "\n", { mode: 0o600 });
+  return row;
+}
+function readLogs(limit = 100) {
+  try {
+    return fs.readFileSync(LOG_FILE, "utf8").trim().split("\n").filter(Boolean).slice(-limit).reverse().map(line => JSON.parse(line));
+  } catch { return []; }
+}
+function send(res, status, body) {
+  res.writeHead(status, { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "x-content-type-options": "nosniff" });
+  res.end(JSON.stringify(body));
+}
+function authorized(req) {
+  if (!TOKEN) return HOST === "127.0.0.1" || HOST === "localhost" || HOST === "::1";
+  const supplied = req.headers.authorization || "";
+  const expected = "Bearer " + TOKEN;
+  return supplied.length === expected.length && crypto.timingSafeEqual(Buffer.from(supplied), Buffer.from(expected));
+}
+function rateAllowed(ip) {
+  const now = Date.now();
+  const item = hits.get(ip) || { start: now, count: 0 };
+  if (now - item.start > 60_000) { item.start = now; item.count = 0; }
+  item.count++;
+  hits.set(ip, item);
+  return item.count <= 120;
+}
+async function bodyJson(req) {
+  let raw = "";
+  for await (const chunk of req) {
+    raw += chunk;
+    if (raw.length > 16_384) throw Object.assign(new Error("Тело запроса слишком большое"), { status: 413 });
+  }
+  try { return raw ? JSON.parse(raw) : {}; }
+  catch { throw Object.assign(new Error("Некорректный JSON"), { status: 400 }); }
+}
+function statusPayload() {
+  return {
+    ok: true,
+    service: "Chert AI",
+    backend: "online",
+    bot: { ...bot, uptimeSeconds: bot.startedAt ? Math.floor((Date.now() - Date.parse(bot.startedAt)) / 1000) : 0 },
+    settings,
+    galaxy,
+    integration: { mode: "web_probe_only", authenticated: false, profile: "unavailable", messages: "unavailable", note: "Проверяется только доступность публичной страницы. Доступ к аккаунту и игровые действия не реализованы." },
+    time: new Date().toISOString()
+  };
+}
+async function checkGalaxy() {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const response = await fetch("https://galaxy.mobstudio.ru/web/", {
+      method: "GET",
+      redirect: "manual",
+      signal: controller.signal,
+      headers: { "user-agent": "ChertAI-AvailabilityCheck/1.0" }
+    });
+    galaxy = {
+      state: response.ok ? "reachable" : "http_error",
+      checkedAt: new Date().toISOString(),
+      httpStatus: response.status,
+      detail: response.ok ? "Публичная страница ответила. Это не означает вход в игровой аккаунт." : "Сайт ответил HTTP " + response.status + ". Авторизация не выполнялась."
+    };
+    audit("galaxy.public_page_checked", { state: galaxy.state, httpStatus: response.status });
+  } catch (error) {
+    galaxy = { state: "unavailable", checkedAt: new Date().toISOString(), httpStatus: null, detail: error.name === "AbortError" ? "Проверка превысила лимит времени." : "Не удалось получить ответ от публичной страницы." };
+    audit("galaxy.public_page_check_failed", { error: error.name || "NetworkError" });
+  } finally { clearTimeout(timeout); }
+  return galaxy;
+}
+
+const server = http.createServer(async (req, res) => {
+  const ip = req.socket.remoteAddress || "unknown";
+  if (!rateAllowed(ip)) return send(res, 429, { error: "Слишком много запросов" });
+  const url = new URL(req.url, "http://localhost");
+  try {
+    if (url.pathname.startsWith("/api/") && req.method !== "GET" && !authorized(req)) {
+      audit("security.unauthorized_request", { method: req.method, path: url.pathname });
+      return send(res, 401, { error: "Требуется локальный доступ или API-токен" });
+    }
+    if (url.pathname === "/api/health" && req.method === "GET") return send(res, 200, { ok: true, backend: "online" });
+    if (url.pathname === "/api/status" && req.method === "GET") return send(res, 200, statusPayload());
+    if (url.pathname === "/api/settings" && req.method === "GET") return send(res, 200, { settings });
+    if (url.pathname === "/api/settings" && req.method === "PUT") {
+      const input = await bodyJson(req);
+      for (const key of Object.keys(DEFAULTS)) if (typeof input[key] === "boolean") settings[key] = input[key];
+      persistSettings();
+      audit("settings.updated", { settings });
+      return send(res, 200, { ok: true, settings });
+    }
+    if (url.pathname === "/api/bot/start" && req.method === "POST") {
+      if (!bot.running) {
+        bot = { running: true, startedAt: new Date().toISOString(), heartbeatAt: new Date().toISOString() };
+        audit("bot.started");
+      }
+      return send(res, 200, { ok: true, bot });
+    }
+    if (url.pathname === "/api/bot/stop" && req.method === "POST") {
+      if (bot.running) audit("bot.stopped");
+      bot = { running: false, startedAt: null, heartbeatAt: null };
+      return send(res, 200, { ok: true, bot });
+    }
+    if (url.pathname === "/api/galaxy/check" && req.method === "POST") return send(res, 200, { ok: true, galaxy: await checkGalaxy() });
+    if (url.pathname === "/api/logs" && req.method === "GET") {
+      const limit = Math.min(200, Math.max(1, Number(url.searchParams.get("limit") || 100)));
+      return send(res, 200, { entries: readLogs(limit) });
+    }
+    if (url.pathname.startsWith("/api/")) return send(res, 404, { error: "API endpoint не найден" });
+
+    const requested = url.pathname === "/" ? "/index.html" : decodeURIComponent(url.pathname);
+    const file = path.resolve(ROOT, "." + requested);
+    if (!file.startsWith(ROOT + path.sep)) return send(res, 403, { error: "Forbidden" });
+    fs.readFile(file, (error, data) => {
+      if (error) return send(res, 404, { error: "Файл не найден" });
+      res.writeHead(200, { "content-type": MIME[path.extname(file)] || "application/octet-stream", "x-content-type-options": "nosniff" });
+      res.end(data);
+    });
+  } catch (error) {
+    audit("api.error", { message: error.message, path: url.pathname });
+    send(res, error.status || 500, { error: error.status ? error.message : "Внутренняя ошибка сервера" });
+  }
+});
+
+server.listen(PORT, HOST, () => {
+  audit("backend.started", { host: HOST, port: PORT });
+  console.log("Chert AI backend listening on http://" + HOST + ":" + PORT);
+});
+for (const signal of ["SIGINT", "SIGTERM"]) process.on(signal, () => {
+  audit("backend.stopping", { signal });
+  server.close(() => process.exit(0));
+});
