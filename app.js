@@ -202,7 +202,7 @@
     $("#api-token").value = "";
     try {
       await refreshStatus();
-      await Promise.all([refreshLogs(), refreshImports()]);
+      await Promise.all([refreshLogs(), refreshImports(), refreshProcessed()]);
       $("#api-auth-state").textContent = "Защищённый API подключён. Токен хранится только в памяти этой вкладки.";
     } catch (error) {
       apiToken = "";
