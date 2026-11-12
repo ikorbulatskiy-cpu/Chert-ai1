@@ -94,6 +94,27 @@
         const content = document.createElement("p");
         content.textContent = item.replyDraft.text;
         draft.append(label, content);
+        const choices = Array.isArray(item.replyDraft.options) ? item.replyDraft.options : [item.replyDraft.text];
+        choices.slice(0, 3).forEach((choice, index) => {
+          const option = document.createElement("div");
+          option.className = "reply-option";
+          const text = document.createElement("p");
+          text.textContent = (index + 1) + ". " + choice;
+          const copy = document.createElement("button");
+          copy.type = "button";
+          copy.className = "button button-secondary";
+          copy.textContent = "Скопировать";
+          copy.addEventListener("click", async () => {
+            try {
+              await navigator.clipboard.writeText(choice);
+              copy.textContent = "Скопировано";
+            } catch {
+              text.textContent = choice + " (выдели и скопируй вручную)";
+            }
+          });
+          option.append(text, copy);
+          draft.append(option);
+        });
         card.append(draft);
       }
       processedList.append(card);
