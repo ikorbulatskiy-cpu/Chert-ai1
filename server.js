@@ -198,7 +198,6 @@ const server = http.createServer(async (req, res) => {
     }
     if (url.pathname === "/api/galaxy/check" && req.method === "POST") return send(res, 200, { ok: true, galaxy: await checkGalaxy() });
     if (isGalaxyImport && req.method === "POST") {
-      if (req.headers.origin !== GALAXY_ORIGIN) return send(res, 403, { error: "Импорт разрешён только со страницы Galaxy" }, cors);
       const input = await bodyJson(req);
       const content = typeof input.text === "string" ? input.text.trim() : "";
       if (!content || content.length > 8000) return send(res, 400, { error: "Выделенный текст должен содержать от 1 до 8000 символов" }, cors);
@@ -206,7 +205,7 @@ const server = http.createServer(async (req, res) => {
       const entry = {
         id: crypto.randomUUID(),
         at: new Date().toISOString(),
-        source: "user_selection",
+        source: "manual_paste",
         pageTitle: typeof input.pageTitle === "string" ? input.pageTitle.slice(0, 200) : "Galaxy",
         pageUrl,
         text: content
