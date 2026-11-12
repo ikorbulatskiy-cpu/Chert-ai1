@@ -62,7 +62,7 @@
 
       <div class="section-heading"><span>04 / РАСПОЗНАННЫЕ ДИАЛОГИ</span><button class="text-button" id="process-imports">ОБРАБОТАТЬ НОВЫЙ ИМПОРТ</button></div>
       <section class="panel log-panel">
-        <p class="hint" id="processing-state">Разбор поддерживает распространённые варианты «Имя: сообщение» и «время Имя: сообщение». Черновики ответов не отправляются автоматически.</p>
+        <p class="hint" id="processing-state">Разбор поддерживает распространённые варианты «Имя: сообщение» и «время Имя: сообщение». Можно выбрать один из нескольких черновиков и скопировать его. Отправка выполняется вручную.</p>
         <div id="processed-list"><p class="log-empty">Пока нет обработанных сообщений.</p></div>
       </section>
 
@@ -74,8 +74,8 @@
 
       <div class="section-heading"><span>06 / НАСТРОЙКИ</span><span class="muted">BACKEND</span></div>
       <section class="panel controls">
-        <div class="control-row"><div><b>Получение сообщений</b><p>Пока только ручной импорт выделенного текста</p></div><label class="switch"><input type="checkbox" data-setting="messageMonitoring"><span></span></label></div>
-        <div class="control-row"><div><b>Автоответы</b><p>Не активны, отправка сообщений не реализована</p></div><label class="switch"><input type="checkbox" data-setting="autoReply"><span></span></label></div>
+        <div class="control-row"><div><b>Получение сообщений</b><p>Ручной импорт. Автоматический мониторинг Galaxy пока недоступен.</p></div><label class="switch"><input type="checkbox" data-setting="messageMonitoring" disabled><span></span></label></div>
+        <div class="control-row"><div><b>Автоответы</b><p>Пока только черновики. Отправка выполняется вручную в Galaxy.</p></div><label class="switch"><input type="checkbox" data-setting="autoReply" disabled><span></span></label></div>
         <div class="control-row"><div><b>Уведомления</b><p>Запись событий в журнал</p></div><label class="switch"><input type="checkbox" data-setting="notifications" checked><span></span></label></div>
         <p class="hint" id="settings-state">Загрузка настроек…</p>
       </section>
