@@ -30,7 +30,7 @@ if (!isLoopbackHost && TOKEN.length < 32) {
   process.exit(1);
 }
 
-const MIME = { ".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".json": "application/json; charset=utf-8" };
+const MIME = { ".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".json": "application/json; charset=utf-8", ".webmanifest": "application/manifest+json; charset=utf-8", ".svg": "image/svg+xml" };
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
 let settings = loadSettings();
