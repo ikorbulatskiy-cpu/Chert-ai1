@@ -163,6 +163,18 @@
     }
   }
 
+  const bookmarkletSource = `javascript:(()=>{if(location.origin!=="https://galaxy.mobstudio.ru"){alert("Открой официальный Galaxy.");return;}const text=(window.getSelection&&window.getSelection().toString()||"").trim();if(!text){alert("Сначала выдели текст сообщений.");return;}const token=prompt("Вставь API-токен Chert AI. Он не будет сохранён.");if(!token)return;fetch("https://chert-ai1.onrender.com/api/galaxy/import",{method:"POST",headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({text,pageTitle:document.title,pageUrl:location.href})}).then(async r=>{const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"HTTP "+r.status);alert("Импортировано: "+d.imported.characters+" символов. Вернись в Chert AI и обработай импорт.");}).catch(e=>alert("Ошибка импорта: "+e.message));})();`;
+  $("#bookmarklet-code").value = bookmarkletSource;
+  $("#copy-bookmarklet").addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(bookmarkletSource);
+      $("#bookmarklet-state").textContent = "Код скопирован. Создай закладку Safari и вставь код в поле адреса.";
+    } catch {
+      $("#bookmarklet-code").focus();
+      $("#bookmarklet-code").select();
+      $("#bookmarklet-state").textContent = "Автокопирование недоступно. Выдели код в поле и скопируй вручную.";
+    }
+  });
   $("#galaxy-text").addEventListener("input", () => {
     $("#galaxy-char-count").textContent = $("#galaxy-text").value.length + " / 8000";
   });
