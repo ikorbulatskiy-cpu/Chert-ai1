@@ -2,6 +2,7 @@
   const $ = selector => document.querySelector(selector);
   const logList = $("#log-list");
   const importList = $("#import-list");
+  const processedList = $("#processed-list");
   const defaults = { messageMonitoring: false, autoReply: false, notifications: true };
   let settings = { ...defaults };
   let backendOnline = false;
@@ -56,6 +57,48 @@
     const data = await api("/api/galaxy/imports?limit=20");
     renderEntries(importList, data.entries || [], "Импортированных выделений пока нет.", true);
   }
+  async function refreshProcessed() {
+    const data = await api("/api/galaxy/processed?limit=30");
+    processedList.replaceChildren();
+    if (!(data.entries || []).length) {
+      const empty = document.createElement("p");
+      empty.className = "log-empty";
+      empty.textContent = "Обработанных диалогов пока нет.";
+      processedList.append(empty);
+      return;
+    }
+    data.entries.forEach(item => {
+      const card = document.createElement("article");
+      card.className = "processed-card";
+      const title = document.createElement("b");
+      title.textContent = item.pageTitle || "Диалог Galaxy";
+      card.append(title);
+      const meta = document.createElement("p");
+      meta.textContent = new Date(item.at).toLocaleString("ru-RU") + " · распознано сообщений: " + item.messageCount;
+      card.append(meta);
+      (item.messages || []).forEach(message => {
+        const row = document.createElement("div");
+        row.className = "parsed-message";
+        const who = document.createElement("strong");
+        who.textContent = (message.sender || "Не определён") + (message.time ? " · " + message.time : "");
+        const body = document.createElement("div");
+        body.textContent = message.text;
+        row.append(who, body);
+        card.append(row);
+      });
+      if (item.replyDraft) {
+        const draft = document.createElement("div");
+        draft.className = "reply-draft";
+        const label = document.createElement("strong");
+        label.textContent = "Черновик ответа · не отправлен";
+        const content = document.createElement("p");
+        content.textContent = item.replyDraft.text;
+        draft.append(label, content);
+        card.append(draft);
+      }
+      processedList.append(card);
+    });
+  }
   async function refreshStatus() {
     const data = await api("/api/status");
     backendOnline = true;
@@ -88,7 +131,7 @@
         return;
       }
       await refreshStatus();
-      await Promise.all([refreshLogs(), refreshImports()]);
+      await Promise.all([refreshLogs(), refreshImports(), refreshProcessed()]);
     } catch (error) {
       backendOnline = false;
       $("#backend-state").textContent = "BACKEND OFFLINE";
@@ -127,7 +170,9 @@
       $("#bridge-state").textContent = "Импортировано " + result.imported.characters + " символов. Данные сохранены на backend.";
       $("#galaxy-text").value = "";
       $("#galaxy-char-count").textContent = "0 / 8000";
-      await Promise.all([refreshImports(), refreshLogs()]);
+      const processed = await api("/api/galaxy/process", { method: "POST", body: JSON.stringify({}) });
+      $("#bridge-state").textContent += " Обработано сообщений: " + processed.processed.messageCount + ".";
+      await Promise.all([refreshImports(), refreshLogs(), refreshProcessed()]);
     } catch (error) {
       $("#bridge-state").textContent = "Импорт не выполнен: " + error.message;
     } finally {
@@ -188,6 +233,21 @@
   });
   $("#refresh-log").addEventListener("click", () => refreshLogs().catch(error => renderEntries(logList, [{ at: new Date().toISOString(), event: "Ошибка загрузки журнала", details: { message: error.message } }], "", false)));
   $("#refresh-imports").addEventListener("click", () => refreshImports().catch(error => renderEntries(importList, [{ at: new Date().toISOString(), pageTitle: "Ошибка загрузки: " + error.message }], "", false)));
+  $("#process-imports").addEventListener("click", async () => {
+    const button = $("#process-imports");
+    button.disabled = true;
+    button.textContent = "Обработка…";
+    try {
+      const result = await api("/api/galaxy/process", { method: "POST", body: JSON.stringify({}) });
+      $("#processing-state").textContent = "Распознано сообщений: " + result.processed.messageCount + ". Черновик ответа подготовлен, но не отправлен.";
+      await refreshProcessed();
+    } catch (error) {
+      $("#processing-state").textContent = error.message;
+    } finally {
+      button.disabled = false;
+      button.textContent = "Обработать новый импорт";
+    }
+  });
   refreshAll();
   setInterval(() => {
     if (!backendOnline) return;
