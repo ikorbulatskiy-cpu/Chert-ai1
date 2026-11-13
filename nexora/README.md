@@ -23,3 +23,5 @@ cd nexora && npm install && npm start
 - Server-side role check for admin overview.
 
 Not implemented yet: password recovery email delivery, direct messages, friend requests and moderation UI, inventory/shop, private rooms, full avatar sprite sheets and end-to-end browser tests. These must not be described as complete until implemented and verified.
+
+CI checks are configured for pull requests touching this directory.
