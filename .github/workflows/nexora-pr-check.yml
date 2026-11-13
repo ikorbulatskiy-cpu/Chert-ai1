@@ -1,0 +1,22 @@
+name: NEXORA pull request checks
+on:
+  pull_request:
+    paths:
+      - "nexora/**"
+      - ".github/workflows/nexora-pr-check.yml"
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        working-directory: nexora
+        run: npm install
+      - name: Check syntax
+        working-directory: nexora
+        run: npm run check
