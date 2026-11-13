@@ -1,0 +1,22 @@
+name: NEXORA checks
+on:
+  push:
+    branches: [nexora-world]
+    paths:
+      - "nexora/**"
+      - ".github/workflows/nexora-check.yml"
+  workflow_dispatch:
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install NEXORA dependencies
+        working-directory: nexora
+        run: npm install
+      - name: Check JavaScript syntax
+        working-directory: nexora
+        run: npm run check
